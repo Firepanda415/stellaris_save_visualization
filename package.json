@@ -1,0 +1,6 @@
+{
+  "name": "stellaris-save-atlas",
+  "private": true,
+  "scripts": { "test": "node --test test/atlas.test.mjs" },
+  "engines": { "node": ">=22" }
+}

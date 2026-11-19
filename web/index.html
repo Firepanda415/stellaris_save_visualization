@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Stellaris Atlas · 群星存档地图</title><link rel="stylesheet" href="atlas.css"></head>
+<body>
+<header><div class="brand"><span class="orbit" aria-hidden="true"></span><div><h1>Stellaris Atlas</h1><span data-i="subtitle">群星存档地图</span></div></div><div class="filetools"><span id="save-label" role="status"></span><select id="language" aria-label="Language"><option value="zh">简体中文</option><option value="en">English</option></select><label class="open" for="file"><span aria-hidden="true">＋</span> <span data-i="open">打开存档</span><input type="file" id="file" accept=".sav,.txt,gamestate"></label></div></header>
+<details id="locations"><summary data-i="locations">Windows 存档位置</summary><div class="location-list" id="location-list"></div><span id="copy-status" role="status"></span></details>
+<main>
+<aside class="filters"><h2 data-i="filters">地图图层</h2>
+<label class="field"><span data-i="view">视角</span><select id="view"><option value="all" data-i="all">存档全图</option><option value="player" data-i="known">玩家记录</option></select></label>
+<section><h3 data-i="worlds">行星</h3>
+<label><input type="checkbox" id="sizes" checked><span data-i="sizeLabels">在星系上标出规模</span></label>
+<label class="field"><span data-i="pool">非剧毒天体范围</span><select id="scope"><option value="colony" data-i="colony">可殖民类型与改造候选</option><option value="bodies" data-i="bodies">全部天体（含恒星）</option></select></label>
+<label class="field"><span data-i="toxic">剧毒星球</span><select id="toxic"><option value="all" data-i="allToxic">全部计入</option><option value="candidate" data-i="candidate">仅环境改造候选</option><option value="off" data-i="off">隐藏并排除</option></select></label>
+<label class="field short"><span data-i="min">最小规模</span><input id="min" type="number" min="0" step="1" value="0"></label></section>
+<section><h3 data-i="layers">叠加显示</h3>
+<label><input id="territory" type="checkbox" checked><span data-i="territory">势力范围</span></label>
+<label><input id="rare" type="checkbox" checked><span class="mark resource">◆</span><span data-i="rare">战略资源</span></label>
+<label class="field"><select id="resource" aria-label="Strategic resource"></select></label>
+<label><input id="relic" type="checkbox" checked><span class="mark relic">◇</span><span data-i="relic">遗落星球</span></label>
+<label><input id="events" type="checkbox" checked><span class="mark event">✦</span><span data-i="events">事件与先驱者母星</span></label>
+<label><input id="clues" type="checkbox"><span class="mark clue">·</span><span data-i="clues">先驱者线索区域</span></label>
+<label><input id="ruins" type="checkbox" checked><span class="mark ruin">▣</span><span data-i="ruins">巨构废墟</span></label></section>
+</aside>
+<section class="map-panel"><div class="map-bar"><div><strong id="map-name"></strong><span id="map-meta" class="meta"></span></div><div class="buttons"><button id="zoom-out" aria-label="Zoom out">−</button><button id="zoom-in" aria-label="Zoom in">＋</button><button id="fit" data-i="fit">全图</button></div></div>
+<div id="plot"><canvas id="map" tabindex="0" aria-label="Galaxy map"></canvas><div id="tooltip" hidden></div><div class="scale" id="zoom-level"></div></div>
+<div class="map-footer"><div class="buttons modes"><button id="select-mode" aria-pressed="true" data-i="select">框选</button><button id="pan-mode" aria-pressed="false" data-i="pan">平移</button></div><span data-i="gesture">拖动框选 · Ctrl 点击或框选增减 · 滚轮缩放</span></div>
+<div class="inspect"><label for="lookup" data-i="inspect">查看星系</label><input list="systems" id="lookup" autocomplete="off"><datalist id="systems"></datalist><button id="toggle-one" data-i="toggle">加选 / 取消</button></div>
+<div id="system-detail" class="system-detail" aria-live="polite"></div>
+</section>
+<aside class="results"><div class="result-heading"><h2 data-i="selection">选区统计</h2><button id="clear" data-i="clear">清空</button></div>
+<label class="ownership"><input type="checkbox" id="foreign"><span data-i="foreign">计入其他势力的星系</span></label>
+<div class="metrics"><div><strong id="count-s">0</strong><span data-i="systems">星系</span></div><div><strong id="count-p">0</strong><span data-i="matched">符合筛选的天体</span></div></div>
+<div id="excluded" class="meta"></div><section><h3 data-i="distribution">规模分布</h3><div class="hist-head"><span data-i="size">规模</span><span class="regular" data-i="other">非剧毒</span><span class="toxic" data-i="toxicShort">剧毒</span></div><div id="hist"></div></section>
+<section><h3 data-i="output">轨道资源</h3><p class="meta" data-i="gross">按计入星系的矿藏计算基础月产。规模筛选只影响行星。玩家视角只计已调查天体。</p><div id="yields"></div><div id="exceptions" class="meta"></div></section>
+<section id="surface-wrap" hidden><h3 data-i="surface">地表战略资源</h3><p data-i="surfaceHint" class="meta">按地貌处数计，实际产出取决于岗位。</p><div id="surface"></div></section>
+</aside></main>
+<script src="reader.js"></script><script src="model.js"></script><script src="highlights.js"></script><script src="demo.js"></script><script src="map.js"></script><script src="app.js"></script>
+</body></html>

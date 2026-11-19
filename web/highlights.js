@@ -1,0 +1,141 @@
+// Keys come from system initializers, system flags, dig sites and anomaly categories.
+// Rewards describe an event branch. A marker can outlive its reward.
+const rubricatorReward = {
+  zh: "发掘遗落星球上的遗址会唤醒裂爪龙。击败它可取得誊录仪，激活一次可获得 2,000 稀有文物。",
+  en: "Excavating the relic world awakens Shard. Defeating the dragon can earn the Rubricator, which grants 2,000 Minor Artifacts per activation.",
+  source: "events/ancient_relics_arcsite_events_1.txt (ancrel.4020), common/relics/relics.txt (r_rubricator)"
+};
+
+const wenkwortReward = {
+  zh: "温科沃特的盖亚星球自带研究人员产出 +10%。同意监管者的保护条件可再加 20%，代价是当地工匠产出 −30%、矿工和精炼师产出 −70%。",
+  en: "Wenkwort's Gaia world starts with +10% researcher output. Accepting custodianship adds another 20% but cuts local artisan output by 30% and miner and refiner output by 70%.",
+  source: "events/federations_events_3.txt (federations3.125), common/static_modifiers/11_static_modifiers_federations.txt (pm_wenkwort_gardens, pm_wenkwort_custodian)"
+};
+
+const highlights = {
+  vultaumar_system: {
+    zh: "完成沃陶姆母星调查可获得凝聚力和三类研究点数。启用 Ancient Relics 时还可取得沃陶姆现实透孔仪，将人口舒适度消耗降低 10%。",
+    en: "Finishing the Vultaum homeworld survey awards Unity and research in all three fields. With Ancient Relics, it also awards the Reality Perforator, which reduces pop amenities use by 10%.",
+    source: "events/precursor_events.txt (precursor.101), common/relics/relics.txt (r_reality_perforator)"
+  },
+  yuhtaan_system: {
+    zh: "完成尤特母星调查后，启用 Ancient Relics 的帝国可取得尤特冷冻核心。持有它可使能量武器射速提高 20%。",
+    en: "Completing the Yuht homeworld survey with Ancient Relics can award the Yuht Cryo Core. It increases energy weapon fire rate by 20%.",
+    source: "events/precursor_events.txt (precursor.601), common/relics/relics.txt (r_cryo_core)"
+  },
+  fen_habbanis_system: {
+    zh: "第一联盟的故都生成时是一颗 25 格遗落星球。完成母星调查可获得凝聚力、社会学研究点数和影响力。",
+    en: "The First League capital starts as a size 25 relic world. Completing the homeworld survey awards Unity, Society research and Influence.",
+    source: "common/solar_system_initializers/prescripted_species_systems.txt (fen_habbanis_system), events/precursor_events.txt (precursor.1101)"
+  },
+  irass_system: {
+    zh: "完成伊拉斯母星调查后，启用 Ancient Relics 的帝国可取得贾沃疹样本。持有它可使领袖寿命延长 20 年。",
+    en: "Completing the Irassian homeworld survey with Ancient Relics can award the Javorian Pox Sample. It adds 20 years to leader lifespan.",
+    source: "events/precursor_events.txt (precursor.1601), common/relics/relics.txt (r_pox_sample)"
+  },
+  cybrex_system: {
+    zh: "完成赛博勒克斯母星调查后，启用 Ancient Relics 的帝国可取得赛博勒克斯兵工厂。每次激活消耗凝聚力，并按 2 矿物换 1 合金的比例进行转化。",
+    en: "Completing the Cybrex homeworld survey with Ancient Relics can award the Cybrex War Forge. Each activation costs Unity and converts two Minerals into one Alloy.",
+    source: "events/precursor_events.txt (precursor.2101), common/relics/relics.txt (r_war_forge)"
+  },
+  precursor_baol_1: {
+    zh: "巴奥线索区域。调查尚无异常和考古点的固态天体，有机会发现古茹努尔遗址，开启巴奥事件链。",
+    en: "Baol clue region. Surveying a suitable solid body with no anomaly or dig site can reveal the Grunur ruins and start the Baol chain.",
+    source: "events/ancient_relics_arcsite_events_1.txt (ancrel.2000)"
+  },
+  last_baol_system: {
+    zh: "找到最后的巴奥，完成对话即可取得同名遗珍。激活后可在一颗符合条件的殖民地实施决议，将它改造为盖亚星球。",
+    en: "Find the Last Baol and complete the dialogue to obtain the relic. Activating it unlocks a decision to turn one eligible colony into a Gaia world.",
+    source: "events/ancient_relics_arcsite_events_1.txt (ancrel.2022, ancrel.2023), common/decisions/05_ancient_relics_decisions.txt (decision_baol_life_seed)"
+  },
+  precursor_zroni_1: {
+    zh: "泽珞族线索区域。优先调查尚未殖民的宜居星球。没有异常或考古点的星球有机会出现第一处泽珞族遗址。",
+    en: "Zroni clue region. Prioritize uncolonized habitable planets. A world with no anomaly or existing dig site can reveal the first Zroni excavation.",
+    source: "events/ancient_relics_arcsite_events_1.txt (ancrel.1)"
+  },
+  Zrocursor_system: {
+    zh: "完成泽珞族母星上的最终发掘可取得灵能档案，使进入虚境的冷却时间缩短 50%。",
+    en: "Completing the final excavation on the Zroni homeworld awards the Psionic Archive, which halves the cooldown for entering the Shroud.",
+    source: "events/ancient_relics_arcsite_events_1.txt (ancrel.19), common/relics/relics.txt (r_zro_crystal)"
+  },
+  precursor_inetian: {
+    zh: "因内特贸易体线索区域。调查荒芜星球或冰冷的荒芜星球，有机会发现古代风暴避难所的线索。",
+    en: "Inetian Traders clue region. Surveying a barren or cold barren world can reveal evidence of ancient storm shelters.",
+    source: "events/precursor_events_cosmic_storms.txt (cstorms.100, cstorms.105)"
+  },
+  weathermanipulators_home_system: {
+    zh: "因内特贸易体的三个考古点分别位于居住星球、工业星球和荒芜星球。调查这些坐标能推进寻找最终避难所的事件链。",
+    en: "Three Inetian dig sites lie on the residential, industrial and barren worlds in this system. Investigating the coordinates advances the search for the last shelter.",
+    source: "common/solar_system_initializers/cosmic_storm_initializers.txt (weathermanipulators_home_system), events/precursor_events_cosmic_storms.txt (cstorms.186)"
+  },
+  site_weathermanipulators_last_shelter: {
+    zh: "完成最后一座风暴避难所的发掘，可获得社会学研究点数和扰动抑制器。持有该遗珍使帝国物理学研究产出提高 15%。",
+    en: "Finishing the last storm shelter excavation awards Society research and the Disturbance Oppressor. The relic raises empire Physics research output by 15%.",
+    source: "events/precursor_events_cosmic_storms.txt (cstorms.193), common/relics/relics.txt (r_weather_manipulator)"
+  },
+  precursor_adakkaria: {
+    zh: "阿达卡利亚线索区域。可以从没有异常或考古点的荒芜星球着手调查，寻找开启事件链的信号。",
+    en: "adAkkaria clue region. Start the search for the first signal by surveying barren worlds without an anomaly or dig site.",
+    source: "events/precursor_events_cosmic_storms.txt (cstorms.200, cstorms.205)"
+  },
+  adSalivul_system: {
+    zh: "艾德萨利伏尔是阿达卡利亚的中途线索。在崩坏星球上完成特殊项目可揭示崇高仁善协会遗址，继续追查其首都。",
+    en: "adSalivul is an intermediate adAkkaria destination. Complete the special project on the broken world to reveal the Institute of Exalted Benevolence and pursue the capital.",
+    source: "events/precursor_events_cosmic_storms.txt (cstorms.2185)"
+  },
+  adSul_system: {
+    zh: "在艾德苏尔首都完成庆典遗址发掘后，可以选择索取风暴召唤器。持有它使凝聚力产出提高 10%，舰船维护费降低 15%。",
+    en: "After excavating the celebration site on the adSul capital, choose to claim the Tempest Invocator. It raises Unity output by 10% and cuts ship upkeep by 15%.",
+    source: "events/precursor_events_cosmic_storms.txt (cstorms.2270, cstorms.2335, cstorms.2355), common/relics/relics.txt (r_the_tempest_invocator)"
+  },
+  omnirelic_site: {
+    zh: "完成发掘可取得有机全典，生物物种可用的特质点数增加 1 点。",
+    en: "Completing this excavation awards the Omnicodex, which adds one trait point for biological species.",
+    source: "events/ancient_relics_arcsite_events_1.txt (ancrel.24), common/relics/relics.txt (r_omnicodex)"
+  },
+  site_debris_belt: {
+    zh: "完成发掘可取得奥得律斯基亚水晶。帝国稀有水晶产出提高 15%，激活时还可获得能量币。",
+    en: "Completing the dig awards the Crystal of Odryskia. It raises empire Rare Crystal production by 15% and grants Energy Credits on activation.",
+    source: "events/arcsite_events.txt (arcsite.2520), common/relics/relics.txt (r_odryskan_crystal)"
+  },
+  site_zarqlan: {
+    zh: "完成发掘可取得扎克兰的头颅。它允许定居帝国殖民圣地星球，也允许游牧帝国在圣地守护者境内建造中途站。",
+    en: "Completing the dig awards the Head of Zarqlan. Settled empires can colonize Holy Worlds. Nomadic empires can build Waystations in Holy Guardian space.",
+    source: "events/ancient_relics_arcsite_events_2.txt (ancrel.6125), common/relics/relics.txt (r_severed_head)"
+  },
+  site_fumongus_dig: {
+    zh: "在保全菌丝网络的结局中，帝国可永久获得 +1 破译能力。",
+    en: "The ending that preserves the mycelial network can give your empire a permanent +1 Codebreaking.",
+    source: "events/ancient_relics_arcsite_events_2.txt (ancrel.13135), common/static_modifiers/02_static_modifiers.txt (mycelial_network_modifier)"
+  },
+  disco_speed_demon_cat: {
+    zh: "打开外星盒子可以改造物种。绿色药剂使宜居性下限提高 30 个百分点，红色使住房消耗降低 5%，蓝色使领袖寿命延长 10%。",
+    en: "Opening the alien box can modify your species. Green raises the habitability floor by 30 percentage points, red cuts housing use by 5%, and blue extends leader lifespan by 10%.",
+    source: "events/distant_stars_events_2.txt (distar.3057), common/traits/04_species_traits.txt (trait_bioadaptability, trait_social_pheromones, trait_limited_regeneration)"
+  },
+  rubricator_system: rubricatorReward,
+  rubricator_digsite: rubricatorReward,
+  wenkwort_initializer: wenkwortReward,
+  WENKWORT_CAT: wenkwortReward
+};
+
+highlights.zroni_digsite_6 = highlights.Zrocursor_system;
+highlights.site_adakkaria_celebration = highlights.adSul_system;
+
+const precursorRegions = [
+  ["precursor_1", "沃陶姆", "Vultaum", "precursor.1"],
+  ["precursor_2", "尤特", "Yuht", "precursor.500"],
+  ["precursor_3", "第一联盟", "First League", "precursor.1000"],
+  ["precursor_4", "伊拉斯人", "Irassian", "precursor.1500"],
+  ["precursor_5", "赛博勒克斯", "Cybrex", "precursor.2000"]
+];
+
+for (const [key, chinese, english, event] of precursorRegions) {
+  highlights[key] = {
+    zh: `这里属于${chinese}线索区域。如果还没有开始先驱者事件链，调查这里的天体有机会找到首条线索。母星系会在事件链后期生成。`,
+    en: `This system lies in the ${english} clue region. If you have yet to begin a precursor chain, surveying here can reveal the first clue. The home system appears later in the chain.`,
+    source: `events/precursor_events.txt (${event})`
+  };
+}
+
+globalThis.HIGHLIGHTS = highlights;

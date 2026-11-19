@@ -618,3 +618,23 @@ input[data-shade=fallen],input[data-count=fallen] {accent-color:var(--territory-
     width:min(450px,95vw);
   }
 }
+.symbol-list {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:3px;
+  margin:5px 0;
+}
+.symbol-list button {
+  padding:3px 4px;
+  text-align:left;
+  font-size:.76rem;
+  line-height:1.25;
+}
+.symbol-list button[aria-pressed=true] {border-color:var(--aqua);background:#27403d;}
+.symbol-list b {display:inline-block;min-width:1em;}
+#symbol-guide summary,#feature-list summary {cursor:pointer;font-size:.83rem;color:var(--muted);}
+#feature-list,#direct-wrap {margin-top:9px;}
+#direct-wrap h4 {margin:0;font-size:.85rem;}
+#feature-counts details {padding:4px 0;border-bottom:1px solid var(--line);}
+#feature-counts ul {list-style:none;padding:0 0 0 9px;margin:4px 0;}
+#feature-counts button {border:0;background:transparent;text-align:left;padding:2px;font-size:.8rem;color:var(--accent);}

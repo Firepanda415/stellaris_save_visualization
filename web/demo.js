@@ -20,6 +20,8 @@ function exampleGalaxy() {
         survey:known,candidate:toxic&&j===0,deposits:random()<.35?[i%6?'d_minerals_3':'d_rare_crystals_1']:[]});
     }
     if(i===18 || i===109) planets[0].type='pc_relic';
+    if(i%29===6){planets[0].type='pc_continental';planets[0].deposits.push('d_betharian_deposit','d_crystalline_caverns');}
+    if(i%47===18){planets[0].type='pc_relic';planets[0].deposits.push('d_artifacts_planet_2');}
     systems.push({id,x,y,name:roots[i%6]+' '+(i+1),owner,ownerKnown:known,known,intel:3,knownLanes:known,
       init:i%54===8?sites[Math.floor(i/54)%Math.max(1,sites.length)] || '':'',flags:i%20===5?['precursor_1']:[],
       planets,megas:i%64===11?['think_tank_ruined']:[],sites:[],lanes:[]});

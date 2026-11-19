@@ -86,6 +86,27 @@ test('orbital totals include deposits on smaller and hidden-by-filter world clas
   assert.equal(v.resources.minerals,6);assert.equal(v.surface.rare_crystals,1);
   assert.equal(v.resources.rare_crystals,undefined);assert.equal(v.bins.size,0);
 });
+test('map symbols and planet rows distinguish fixed surface yields, job deposits, orbital artifacts and relic prizes',async()=>{
+  const save=source.replace('deposits={1 2}','deposits={1 2 12 13 14 15}')
+    .replace('deposits={3 4}','deposits={3 4 16}')
+    .replace('deposit={1=', 'deposit={12={type=d_betharian_deposit} 13={type=d_artifacts_planet_2} 14={type=d_artifacts_planet_2} 15={type=d_artifacts_research_1} 16={type=d_alien_pets_deposit} 1=');
+  const data=await GalaxyReader.readFile(new Blob([save]));
+  const overlay={...opts,features:true,rare:true,rewards:true,min:99};
+  const inspectWith=changes=>GalaxyModel.inspect(data,catalog,{...overlay,...changes},HIGHLIGHTS);
+  const rows=inspectWith({}),home=rows.get('3'),v=stats(rows);
+  assert.deepEqual(new Set(home.materialMarks),new Set(['rare_crystals','d_betharian_deposit','minor_artifacts','feature','reward']));
+  assert.equal(home.locations.find(loc=>loc.planet.id==='8').features.d_artifacts_planet_2,2);
+  assert.equal(v.surface.minor_artifacts,2);assert.equal(v.surfaceYield.minor_artifacts,4);
+  assert.equal(v.resources.minor_artifacts,1);assert.equal(v.features.d_betharian_deposit,1);
+  assert.equal(v.surfaceYield.rare_crystals,undefined);assert.equal(v.prizes.r_omnicodex,1);
+  assert.equal(v.prizes.r_rubricator,undefined);assert.equal(stats(rows,true).prizes.r_rubricator,1);
+  assert.deepEqual(inspectWith({resource:'d_betharian_deposit'}).get('3').materialMarks,['d_betharian_deposit']);
+  assert.deepEqual(inspectWith({resource:'d_crystalline_caverns'}).get('3').materialMarks,['rare_crystals']);
+  assert.deepEqual(inspectWith({resource:'r_omnicodex'}).get('3').materialMarks,['reward']);
+  assert.deepEqual(inspectWith({features:false,rewards:false}).get('3').materialMarks,['minor_artifacts']);
+  assert.deepEqual(inspectWith({view:'player'}).get('3').materialMarks,['d_betharian_deposit','minor_artifacts','rare_crystals']);
+  assert.equal(stats(inspectWith({view:'player'})).features.d_alien_pets_deposit,undefined);
+});
 test('player records hide unsurveyed yields and undiscovered sites and other systems',()=>{
   const r=inspect({view:'player'});
   assert.equal(r.size,1);assert.equal(r.get('3').events.length,0);assert.equal(r.get('3').sites.length,0);

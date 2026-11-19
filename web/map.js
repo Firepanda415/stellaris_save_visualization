@@ -1,9 +1,5 @@
 (() => {
   'use strict';
-  const resourceSymbols={
-    rare_crystals:['晶','C'],exotic_gases:['气','G'],volatile_motes:['微','M'],sr_zro:['泽','Z'],
-    sr_dark_matter:['暗','D'],sr_living_metal:['活','L'],nanites:['纳','N'],minor_artifacts:['文','A'],astral_threads:['丝','T']
-  };
   // The game's default galaxy view places positive save X to the left.
   const mapX=x=>-x;
   // Clip each territory cell against nearby systems. The radius leaves empty inter-arm space unclaimed.
@@ -88,6 +84,11 @@
       }
       this.zoom=1;this.queue();
     }
+    focusSystem(id){
+      const s=this.rows.get(id)?.s;
+      if(!s)return;
+      this.center=[mapX(s.x),s.y];this.zoom=Math.max(2,this.zoom);this.queue();
+    }
     get scale(){return Math.min(Math.max(this.w-50,1)/(this.extent?.[0]||1), Math.max(this.h-46,1)/(this.extent?.[1]||1))*this.zoom;}
     xy(x,y){return [(mapX(x)-this.center[0])*this.scale+this.w/2,(y-this.center[1])*this.scale+this.h/2];}
     pos(e){const b=this.canvas.getBoundingClientRect();return [e.clientX-b.left,e.clientY-b.top];}
@@ -96,7 +97,12 @@
       this.center[0]+=(x-this.w/2)*(1/old-1/this.scale);this.center[1]+=(y-this.h/2)*(1/old-1/this.scale);
       this.handlers.hover(null);this.queue();
     }
-    hit(x,y){
+    targetAt(x,y){
+      // Material badges paint over the star layer. Pick the topmost painted badge.
+      for(let i=this.markerHits.length-1;i>=0;i--){
+        const mark=this.markerHits[i];
+        if(mark.key && x>=mark.left && x<mark.right && y>=mark.top && y<mark.bottom)return mark;
+      }
       let best=null,limit=100;
       for(const {s} of this.rows.values()){
         const [sx,sy]=this.xy(s.x,s.y),d=(x-sx)**2+(y-sy)**2;
@@ -104,11 +110,12 @@
       }
       if(limit>16){
         for(const mark of this.markerHits){
-          if(x>=mark.left && x<=mark.right && y>=mark.top && y<=mark.bottom) return mark.id;
+          if(x>=mark.left && x<=mark.right && y>=mark.top && y<=mark.bottom)return mark;
         }
       }
-      return best;
+      return best===null?null:{id:best};
     }
+    hit(x,y){return this.targetAt(x,y)?.id ?? null;}
     down(e){
       if(this.drag || e.button>2)return;
       const [x,y]=this.pos(e);
@@ -118,7 +125,7 @@
     }
     move(e){
       const [x,y]=this.pos(e),d=this.drag;
-      if(!d){this.handlers.hover(this.hit(x,y),x,y);return;}
+      if(!d){const target=this.targetAt(x,y);this.handlers.hover(target?.id,x,y,target?.key);return;}
       if(e.pointerId!==d.pointer)return;
       d.endX=x;d.endY=y;
       if(d.pan)this.center=[d.c[0]-(x-d.x)/this.scale,d.c[1]-(y-d.y)/this.scale];
@@ -178,10 +185,21 @@
         ctx.fillStyle=opts.territory && opts.shaded.has(territory)?this.colors[territory]:selected?'#d9efdf':'#9cadb1';
         ctx.beginPath();ctx.arc(x,y,rad,0,2*Math.PI);ctx.fill();
         if((selected && (this.selected.size<80 || this.zoom>2)) || this.pick===s.id){ctx.strokeStyle=this.pick===s.id?'#fff4cc':'#73d6b9';ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(x,y,rad+2.5,0,Math.PI*2);ctx.stroke();}
-        visible.push({r,x,y,priority:(this.pick===s.id?1000:0)+(r.relic||r.ruins.length||r.events.length||r.homes.length?80:0)+(r.worlds[0]?.size||0)});
+        if(opts.resource && r.materialMarks.length){
+          ctx.strokeStyle=GalaxyModel.symbols[r.materialMarks[0]][2];ctx.lineWidth=1.7;
+          ctx.beginPath();ctx.arc(x,y,rad+4,0,2*Math.PI);ctx.stroke();
+        }
+        const special=r.materialMarks.some(k=>['d_betharian_deposit','minor_artifacts','reward'].includes(k));
+        visible.push({r,x,y,priority:(this.pick===s.id?1000:0)+(special?160:0)+(r.relic||r.ruins.length||r.events.length||r.homes.length?80:0)+(r.worlds[0]?.size||0)});
       }
       visible.sort((a,b)=>b.priority-a.priority);
       const occupied=new Set();
+      const starCells=new Map();
+      for(const point of visible){
+        const key=Math.floor(point.x/24)+','+Math.floor(point.y/24);
+        if(!starCells.has(key))starCells.set(key,[]);
+        starCells.get(key).push(point);
+      }
       function space(x,y,width){
         const cells=[];
         for(let i=Math.floor(x/8);i<=Math.floor((x+width)/8);i++)for(let j=Math.floor((y-5)/8);j<=Math.floor((y+5)/8);j++){
@@ -190,7 +208,49 @@
         for(const key of cells)occupied.add(key);
         return true;
       }
+      const drawMaterials=(r,x,y)=>{
+        if(!r.materialMarks.length)return;
+        const place=(width,offsets)=>{
+          for(const [dx,dy] of offsets){
+            const left=x+dx,cy=y+dy,right=left+width;
+            if(left<0 || right>this.w || cy<=6 || cy>=this.h-6)continue;
+            let blocked=false;
+            for(let i=Math.floor((left-3)/24);i<=Math.floor((right+3)/24) && !blocked;i++)
+              for(let j=Math.floor((cy-9)/24);j<=Math.floor((cy+9)/24) && !blocked;j++)
+                blocked=(starCells.get(i+','+j) ?? []).some(p=>p.x>=left-3 && p.x<=right+3 && Math.abs(p.y-cy)<=9);
+            if(!blocked && space(left,cy,width))return [left,cy];
+          }
+        };
+        let badges=r.materialMarks;
+        const width=14*badges.length;
+        let pos=place(width,[[4,10],[4,-10],[-width-4,10],[-width-4,-10]]);
+        if(!pos && (opts.resource || ['d_betharian_deposit','minor_artifacts','reward'].includes(badges[0]))){
+          badges=badges.slice(0,1);
+          pos=place(14,[[4,10],[4,-10],[-18,10],[-18,-10],[7,17],[-20,-17],[7,-17],[-20,17],[18,0],[-32,0]]);
+          if(!pos && opts.resource){
+            // A focused filter keeps every matching system labeled, even in a dense core.
+            pos=[[x+4,y+10],[x-18,y-10],[x+4,y-10],[x-18,y+10]].find(([lx,ly])=>
+              lx>=0 && lx+14<=this.w && ly>=6 && ly+6<=this.h && space(lx,ly,14))
+              ?? [Math.max(0,Math.min(this.w-14,x+4)),Math.max(6,Math.min(this.h-6,y+10))];
+          }
+          if(pos){ctx.strokeStyle='#6a8588';ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(pos[0]+7,pos[1]);ctx.stroke();}
+        }
+        if(!pos){
+          ctx.fillStyle=GalaxyModel.symbols[badges[0]][2];ctx.fillRect(x-2,y+3,4,2);return;
+        }
+        const [left,cy]=pos;
+        const length=badges.length*14;
+        ctx.fillStyle='#0c1a20';ctx.fillRect(left,cy-6,length,12);
+        for(const [i,key] of badges.entries()){
+          const symbol=GalaxyModel.symbols[key],bx=left+i*14;
+          ctx.fillStyle=symbol[2];ctx.fillText(symbol[opts.lang==='en'?1:0],bx+1,cy);
+          this.markerHits.push({id:r.s.id,key:opts.resource || key,left:bx,right:bx+14,top:cy-6,bottom:cy+6});
+        }
+      };
+      // Reserve space for special deposits before size labels in crowded systems.
+      for(const {r,x,y} of visible)drawMaterials(r,x,y);
       for(const {r,x,y} of visible){
+        ctx.globalAlpha=(opts.resource && !r.materialMarks.length && this.pick!==r.s.id) ? .45 : 1;
         if(opts.sizes && r.worlds.length){
           let tx=x+5;
           const worlds=r.worlds.slice(0,this.zoom>=3?8:3);
@@ -205,11 +265,6 @@
           }
         }
         const marks=[];
-        if(opts.rare)for(const resource of r.rare){
-          if(opts.resource && resource!==opts.resource)continue;
-          const symbol=resourceSymbols[resource]?.[opts.lang==='en'?1:0] ?? '◆';
-          marks.push([symbol,'#81dced']);
-        }
         if(opts.relic && r.relic)marks.push(['◇','#dba5f0']);
         if(opts.ruins && r.ruins.length)marks.push(['▣','#ef9b7c']);
         if(opts.events && (r.events.length || r.sites.length))marks.push(['✦','#ffd094']);
@@ -225,6 +280,7 @@
           }
         }
       }
+      ctx.globalAlpha=1;
       const d=this.drag;
       if(d && !d.pan){
         ctx.fillStyle='#79e3bd25';ctx.strokeStyle='#9af1cd';ctx.lineWidth=1;

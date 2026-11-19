@@ -16,6 +16,11 @@ ORBITAL_CATEGORIES = {'orbital_mining_deposits', 'orbital_research_deposits'}
 NAME_FILES = {'random_names', 'name_parts_00_empire_names', 'empire_formats',
               'formats_00_empire_names'}
 NAME_VARIABLES = {'name', 'number', 'prefix', 'suffix', 'title', 'parent', 'numeral', '1', '2', '3'}
+HABITAT_EXTRACTION_JOBS = {
+    'job_gas_extractor_add': 'exotic_gases', 'job_gas_extraction_drone_add': 'exotic_gases',
+    'job_crystal_miner_add': 'rare_crystals', 'job_crystal_mining_drone_add': 'rare_crystals',
+    'job_mote_harvester_add': 'volatile_motes', 'job_mote_harvesting_drone_add': 'volatile_motes',
+}
 
 
 def read_script(path):
@@ -56,27 +61,54 @@ def scalar(entries, key):
     return next((value for name, value in entries if name == key and isinstance(value, str)), None)
 
 
-def deposit_data(entries, resources, strategic):
+def positive_amount(value, variables):
+    if isinstance(value, str):
+        raw = variables.get(value, value)
+        if re.fullmatch(r'\d+(?:\.\d+)?', raw):
+            return float(raw) if '.' in raw else int(raw)
+    return 0
+
+
+def modifier_resources(entries, strategic, variables):
+    for key, value in entries:
+        if key == 'modifier' and isinstance(value, list):
+            yield from modifier_resources(value, strategic, variables)
+        elif positive_amount(value, variables):
+            if key in HABITAT_EXTRACTION_JOBS:
+                yield HABITAT_EXTRACTION_JOBS[key]
+            elif key.startswith('planet_') and key.endswith('_produces_add'):
+                yield from (res for res in strategic if key.endswith(f'_{res}_produces_add'))
+
+
+def deposit_data(entries, resources, strategic, important_categories, variables):
     record = {}
     production = Counter()
+    surface_production = Counter()
     surface = set()
     planetary = scalar(entries, 'is_for_colonizable') == 'yes'
     station = scalar(entries, 'station') in {'shipclass_mining_station', 'shipclass_research_station'}
+    if not station and scalar(entries, 'category') in important_categories:
+        record['important'] = True
+        planetary = True
     for key, values in entries:
         if key in {'planet_modifier', 'triggered_planet_modifier'} and isinstance(values, list):
             planetary = True
-            for modifier, bonus in values:
-                if (modifier.startswith('planet_') and modifier.endswith('_produces_add')
-                        and isinstance(bonus, str) and not bonus.startswith('-')):
-                    surface.update(res for res in strategic if modifier.endswith(f'_{res}_produces_add'))
+            surface.update(modifier_resources(values, strategic, variables))
         if key != 'resources' or not isinstance(values, list):
             continue
         category = scalar(values, 'category')
         if not station:
+            direct = all(k in {'category', 'cost', 'upkeep', 'produces'} for k, _ in values)
             for name, produces in values:
                 if name == 'produces' and isinstance(produces, list):
                     planetary = True
-                    surface.update(k for k, _ in produces if k in strategic)
+                    fixed = direct and all(k in resources for k, _ in produces)
+                    for resource, value in produces:
+                        amount = positive_amount(value, variables)
+                        if resource in strategic and amount:
+                            surface.add(resource)
+                            if fixed:
+                                surface_production[resource] += amount
             continue
         if category not in ORBITAL_CATEGORIES:
             record['conditional'] = True
@@ -100,6 +132,8 @@ def deposit_data(entries, resources, strategic):
         record['planetary'] = True
     if surface:
         record['surfaceStrategic'] = sorted(surface)
+    if surface_production:
+        record['surfaceYield'] = dict(sorted(surface_production.items()))
     return record
 
 
@@ -169,19 +203,29 @@ def build(game):
     common = game / 'common'
     classes = dict(definitions(common, 'planet_classes'))
     resources = dict(definitions(common, 'strategic_resources'))
+    important_categories = {key for key, block in definitions(common, 'deposit_categories')
+                            if scalar(block, 'important') == 'yes'}
     strategic = sorted(k for k, data in resources.items() if scalar(data, 'category') in {'strategic', 'rare'})
     variables = {}
     for path in sorted((common / 'scripted_variables').glob('*.txt')):
-        variables.update(re.findall(r'^(@arc_furnace_[34]_output_\w+)\s*=\s*(\d+(?:\.\d+)?)\b',
+        variables.update(re.findall(r'^[ \t]*(@\w+)[ \t]*=[ \t]*(-?\d+(?:\.\d+)?)[ \t]*(?:#[^\n]*)?$',
                                     path.read_text(encoding='utf-8-sig'), re.MULTILINE))
     deposits = {}
-    for key, data in definitions(common, 'deposits'):
-        deposits[key] = deposit_data(data, resources, strategic)
-        if key in {'d_arc_furnace_3', 'd_arc_furnace_4'}:
-            branches = arc_furnace_branches(data, variables, resources)
-            if branches:
-                deposits[key]['branches'] = branches
+    for path in sorted((common / 'deposits').glob('*.txt')):
+        entries = read_script(path)
+        local_vars = variables | {k: v for k, v in entries if k.startswith('@') and isinstance(v, str)}
+        for key, data in entries:
+            if not isinstance(data, list):
+                continue
+            deposits[key] = deposit_data(data, resources, strategic, important_categories, local_vars)
+            if key in {'d_arc_furnace_3', 'd_arc_furnace_4'}:
+                branches = arc_furnace_branches(data, local_vars, resources)
+                if branches:
+                    deposits[key]['branches'] = branches
     keys = set(classes) | set(resources) | set(deposits)
+    # Include relic names in the map's curated reward notes.
+    highlights = Path(__file__).resolve().parents[1] / 'web' / 'highlights.js'
+    keys.update(re.findall(r'\brelic:\s*"(r_\w+)"', highlights.read_text(encoding='utf-8')))
     for folder in ('archaeological_site_types', 'anomalies', 'megastructures', 'star_classes'):
         for path in (common / folder).glob('*.txt'):
             keys.update(DEFINITION.findall(path.read_text(encoding='utf-8-sig')))

@@ -1,6 +1,7 @@
 // Keys come from system initializers, system flags, dig sites and anomaly categories.
 // Rewards describe an event branch. A marker can outlive its reward.
 const rubricatorReward = {
+  relic: "r_rubricator",
   title: { zh: "事件 · 誊录仪（飞天鼠盗）", en: "Event · The Rubricator (Kleptomaniac Rats)" },
   zh: "发掘遗落星球上的遗址会唤醒裂爪龙。击败它可取得誊录仪，激活一次可获得 2,000 稀有文物。",
   en: "Excavating the relic world awakens Shard. Defeating the dragon can earn the Rubricator, which grants 2,000 Minor Artifacts per activation.",
@@ -16,6 +17,7 @@ const wenkwortReward = {
 
 const highlights = {
   vultaumar_system: {
+    relic: "r_reality_perforator",
     home: true,
     title: { zh: "先驱者母星 · 沃陶姆（沃陶穆尔）", en: "Precursor homeworld · Vultaum (Vultaumar)" },
     zh: "完成沃陶姆母星调查可获得凝聚力和三类研究点数。启用 Ancient Relics 时还可取得沃陶姆现实透孔仪，将人口舒适度消耗降低 10%。",
@@ -23,6 +25,7 @@ const highlights = {
     source: "events/precursor_events.txt (precursor.101), common/relics/relics.txt (r_reality_perforator)"
   },
   yuhtaan_system: {
+    relic: "r_cryo_core",
     home: true,
     title: { zh: "先驱者母星 · 尤特（尤特安）", en: "Precursor homeworld · Yuht (Yuhtaan)" },
     zh: "完成尤特母星调查后，启用 Ancient Relics 的帝国可取得尤特冷冻核心。持有它可使能量武器射速提高 20%。",
@@ -37,6 +40,7 @@ const highlights = {
     source: "common/solar_system_initializers/prescripted_species_systems.txt (fen_habbanis_system), events/precursor_events.txt (precursor.1101)"
   },
   irass_system: {
+    relic: "r_pox_sample",
     home: true,
     title: { zh: "先驱者母星 · 伊拉斯人（伊拉斯）", en: "Precursor homeworld · Irassians (Irass)" },
     zh: "完成伊拉斯母星调查后，启用 Ancient Relics 的帝国可取得贾沃疹样本。持有它可使领袖寿命延长 20 年。",
@@ -44,6 +48,7 @@ const highlights = {
     source: "events/precursor_events.txt (precursor.1601), common/relics/relics.txt (r_pox_sample)"
   },
   cybrex_system: {
+    relic: "r_war_forge",
     home: true,
     title: { zh: "先驱者母星 · 赛博勒克斯中枢节点（赛博勒克斯-阿尔法）", en: "Precursor home system · Cybrex Central Nexus (Cybrex Alpha)" },
     zh: "完成赛博勒克斯母星调查后，启用 Ancient Relics 的帝国可取得赛博勒克斯兵工厂。每次激活消耗凝聚力，并按 2 矿物换 1 合金的比例进行转化。",
@@ -57,6 +62,7 @@ const highlights = {
     source: "events/ancient_relics_arcsite_events_1.txt (ancrel.2000)"
   },
   last_baol_system: {
+    relic: "r_the_last_baol",
     title: { zh: "先驱者终点 · 最后的巴奥（古茹努尔）", en: "Precursor destination · The Last Baol (Grunur)" },
     zh: "找到最后的巴奥，完成对话即可取得同名遗珍。激活后可在一颗符合条件的殖民地实施决议，将它改造为盖亚星球。",
     en: "Find the Last Baol and complete the dialogue to obtain the relic. Activating it unlocks a decision to turn one eligible colony into a Gaia world.",
@@ -69,6 +75,7 @@ const highlights = {
     source: "events/ancient_relics_arcsite_events_1.txt (ancrel.1)"
   },
   Zrocursor_system: {
+    relic: "r_zro_crystal",
     home: true,
     title: { zh: "先驱者母星 · 泽珞族（泽珞星）", en: "Precursor homeworld · Zroni (Zron)" },
     zh: "完成泽珞族母星上的最终发掘可取得灵能档案，使进入虚境的冷却时间缩短 50%。",
@@ -88,6 +95,7 @@ const highlights = {
     source: "common/solar_system_initializers/cosmic_storm_initializers.txt (weathermanipulators_home_system), events/precursor_events_cosmic_storms.txt (cstorms.186)"
   },
   site_weathermanipulators_last_shelter: {
+    relic: "r_weather_manipulator",
     title: { zh: "先驱者最终遗址 · 末日前夕（因内特贸易体）", en: "Final precursor dig · Before the Fall (Inetian Traders)" },
     zh: "完成最后一座风暴避难所的发掘，可获得社会学研究点数和扰动抑制器。持有该遗珍使帝国物理学研究产出提高 15%。",
     en: "Finishing the last storm shelter excavation awards Society research and the Disturbance Oppressor. The relic raises empire Physics research output by 15%.",
@@ -106,6 +114,7 @@ const highlights = {
     source: "events/precursor_events_cosmic_storms.txt (cstorms.2185)"
   },
   adSul_system: {
+    relic: "r_the_tempest_invocator",
     home: true,
     title: { zh: "先驱者首都 · 庆典学院（艾德苏尔）", en: "Precursor capital · Celebration (adSul)" },
     zh: "在艾德苏尔首都完成庆典遗址发掘后，可以选择索取风暴召唤器。持有它使凝聚力产出提高 10%，舰船维护费降低 15%。",
@@ -113,18 +122,21 @@ const highlights = {
     source: "events/precursor_events_cosmic_storms.txt (cstorms.2270, cstorms.2335, cstorms.2355), common/relics/relics.txt (r_the_tempest_invocator)"
   },
   omnirelic_site: {
+    relic: "r_omnicodex",
     title: { zh: "考古点 · 废弃星球（有机全典）", en: "Dig site · Ruined World (Omnicodex)" },
     zh: "完成发掘可取得有机全典，生物物种可用的特质点数增加 1 点。",
     en: "Completing this excavation awards the Omnicodex, which adds one trait point for biological species.",
     source: "events/ancient_relics_arcsite_events_1.txt (ancrel.24), common/relics/relics.txt (r_omnicodex)"
   },
   site_debris_belt: {
+    relic: "r_odryskan_crystal",
     title: { zh: "考古点 · 碎片环带（奥得律斯基亚水晶）", en: "Dig site · Debris Belt (Crystal of Odryskia)" },
     zh: "完成发掘可取得奥得律斯基亚水晶。帝国稀有水晶产出提高 15%，激活时还可获得能量币。",
     en: "Completing the dig awards the Crystal of Odryskia. It raises empire Rare Crystal production by 15% and grants Energy Credits on activation.",
     source: "events/arcsite_events.txt (arcsite.2520), common/relics/relics.txt (r_odryskan_crystal)"
   },
   site_zarqlan: {
+    relic: "r_severed_head",
     title: { zh: "考古点 · 古墓（扎克兰的头颅）", en: "Dig site · Ancient Tomb (Head of Zarqlan)" },
     zh: "完成发掘可取得扎克兰的头颅。它允许定居帝国殖民圣地星球，也允许游牧帝国在圣地守护者境内建造中途站。",
     en: "Completing the dig awards the Head of Zarqlan. Settled empires can colonize Holy Worlds. Nomadic empires can build Waystations in Holy Guardian space.",

@@ -19,8 +19,13 @@
 <label><input type="checkbox" data-shade="npc" checked><span data-i="npcTerr">普通 NPC</span></label>
 <label><input type="checkbox" data-shade="fallen" checked><span data-i="fallenTerr">堕落帝国</span></label>
 </div>
-<label><input id="rare" type="checkbox" checked><span class="mark resource">◆</span><span data-i="rare">战略资源</span></label>
-<label class="field"><select id="resource" aria-label="Strategic resource"></select></label>
+<label><input id="rare" type="checkbox" checked><span data-i="rare">轨道战略资源与文物</span></label>
+<label><input id="features" type="checkbox" checked><span data-i="features">行星特殊资源与地貌</span></label>
+<label><input id="rewards" type="checkbox" checked><span data-i="rewards">遗珍奖励地点</span></label>
+<label class="field"><span data-i="markFilter">筛选资源与地貌标记</span><select id="resource"></select></label>
+<div class="meta" id="material-count" aria-live="polite" hidden></div>
+<div id="symbols-main" class="symbol-list"></div>
+<details id="symbol-guide"><summary data-i="legend">更多地图标记</summary><div id="symbols" class="symbol-list"></div></details>
 <label><input id="relic" type="checkbox" checked><span class="mark relic">◇</span><span data-i="relic">遗落星球</span></label>
 <label><input id="events" type="checkbox" checked><span class="mark event">✦</span><span data-i="events">特殊事件与考古点</span></label>
 <label><input id="homes" type="checkbox" checked><span class="mark home-marker">★</span><span data-i="homes">先驱者母星系</span></label>
@@ -43,7 +48,10 @@
 <div class="metrics"><div><strong id="count-s">0</strong><span data-i="systems">星系</span></div><div><strong id="count-p">0</strong><span data-i="matched">符合筛选的天体</span></div></div>
 <div id="excluded" class="meta"></div><section><h3 data-i="distribution">规模分布</h3><div class="hist-head"><span data-i="size">规模</span><span class="regular" data-i="other">非剧毒</span><span class="toxic" data-i="toxicShort">剧毒</span></div><div id="hist"></div></section>
 <section><h3 data-i="output">轨道资源</h3><p class="meta" data-i="gross">按计入星系的矿藏计算基础月产。规模筛选只影响行星。玩家视角只计已调查天体。</p><div id="yields"></div><div id="exceptions" class="meta"></div></section>
-<section id="surface-wrap" hidden><h3 data-i="surface">地表战略资源</h3><p data-i="surfaceHint" class="meta">按地貌处数计，实际产出取决于岗位。</p><div id="surface"></div></section>
+<section id="surface-wrap" hidden><h3 data-i="surface">行星特殊资源与地貌</h3><p data-i="surfaceHint" class="meta">按地貌处数统计。固定月产单列，岗位产出取决于开发情况。</p><div id="surface"></div>
+<div id="direct-wrap" hidden><h4 data-i="direct">固定地表基础月产</h4><div id="direct"></div></div>
+<details id="feature-list"><summary data-i="featureList">地貌明细与所在行星</summary><div id="feature-counts"></div></details></section>
+<section id="prize-wrap" hidden><h3 data-i="prizes">可能取得遗珍的星系</h3><div id="prizes"></div></section>
 </aside></main>
 <script src="reader.js"></script><script src="model.js"></script><script src="highlights.js"></script><script src="demo.js"></script><script src="map.js"></script><script src="app.js"></script>
 </body></html>

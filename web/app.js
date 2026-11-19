@@ -5,7 +5,8 @@
     subtitle:'Stellaris save map',open:'Open save',filters:'Map layers',view:'View',all:'Full save',known:'Player records',
     worlds:'Planets',sizeLabels:'Label planet sizes',pool:'Non-toxic bodies',colony:'Colonizable types & candidates',bodies:'All bodies, including stars',
     toxic:'Toxic worlds',allToxic:'Include all',candidate:'Terraforming candidates only',off:'Hide and exclude',min:'Minimum size',
-    layers:'Overlays',territory:'Empire territory',rare:'Strategic resources',relic:'Relic worlds',events:'Events & dig sites',homes:'Precursor home systems',
+    layers:'Overlays',territory:'Empire territory',rare:'Orbital resources & artifacts',features:'Planetary resources & features',rewards:'Relic reward locations',
+    markFilter:'Filter resource and feature markers',legend:'More map symbols',relic:'Relic worlds',events:'Events & dig sites',homes:'Precursor home systems',
     playerTerr:'Player',npcTerr:'Regular NPC',fallenTerr:'Fallen Empire',unknownTerr:'Unknown owner',
     countTerritory:'Territory to count',freeTerr:'Unclaimed systems always count.',
     clues:'Precursor clue regions',ruins:'Ruined megastructures',fit:'Fit',select:'Select',pan:'Pan',
@@ -13,7 +14,8 @@
     selection:'Selection',clear:'Clear',systems:'Systems',matched:'Matching bodies',
     distribution:'Size distribution',size:'Size',other:'Non-toxic',toxicShort:'Toxic',output:'Orbital resources',
     gross:'Base monthly yield in counted systems, across all sizes. Player records include only surveyed bodies.',
-    surface:'Surface resources',surfaceHint:'Number of features. Output depends on jobs.',locations:'Windows save locations'
+    surface:'Planetary resources & features',surfaceHint:'Counts are feature sites. Fixed base yields are listed separately. Job output depends on development.',
+    direct:'Fixed surface yield per month',featureList:'Feature counts and planets',prizes:'Systems with possible relic rewards',locations:'Windows save locations'
   };
   const labels=[...document.querySelectorAll('[data-i]')].map(el=>[el,el.textContent,en[el.dataset.i]]);
   const model=globalThis.GalaxyModel;
@@ -47,18 +49,53 @@
     const checked=attribute=>new Set([...document.querySelectorAll('[data-'+attribute+']:checked')].map(el=>el.dataset[attribute]));
     return {min:Math.max(0,Number($('min').value)||0),toxic:$('toxic').value,scope:$('scope').value,view:$('view').value,
       resource:$('resource').value,shaded:checked('shade'),included:checked('count').add('unclaimed'),lang,
-      ...Object.fromEntries(['sizes','territory','rare','relic','events','homes','ruins','clues'].map(k=>[k,$(k).checked]))};
+      ...Object.fromEntries(['sizes','territory','rare','features','rewards','relic','events','homes','ruins','clues'].map(k=>[k,$(k).checked]))};
+  }
+  function featureName(key){
+    return local(key).replace(/£[\w]+£\s*/g,'').trim() || key;
+  }
+  function tagName(k){
+    if(k==='reward')return t('遗珍奖励地点','Relic reward location');
+    if(k==='feature')return t('其他特殊地貌','Other special features');
+    return featureName(k);
+  }
+  function filterOptions(){
+    const select=$('resource'),current=select.value;
+    select.replaceChildren(new Option(t('全部标记','All markers'),''));
+    const group=(name,items)=>{
+      if(!items.length)return;
+      const g=document.createElement('optgroup');g.label=name;
+      for(const [key,label] of items)g.append(new Option(label,key));
+      select.append(g);
+    };
+    group(t('标记种类','Marker types'),Object.entries(model.symbols).map(([k,symbol])=>
+      [k,symbol[lang==='en'?1:0]+' · '+tagName(k)]));
+    const features=new Set(),prizes=new Set();
+    for(const row of rows.values()){
+      for(const k of Object.keys(row.features))if(k!=='d_betharian_deposit')features.add(k);
+      for(const k of row.prizes.keys())prizes.add(k);
+    }
+    const named=keys=>[...keys].map(k=>[k,featureName(k)+(cat.deposits[k]?.surfaceYield?' ('+Object.entries(cat.deposits[k].surfaceYield).map(([r,n])=>local(r)+' +'+nf(n)).join(', ')+')':'')])
+      .sort((a,b)=>a[1].localeCompare(b[1],lang));
+    group(t('当前视角的地貌','Features in this view'),named(features));
+    group(t('当前视角的遗珍奖励','Relic rewards in this view'),named(prizes));
+    select.value=[...select.options].some(o=>o.value===current)?current:'';
+    select.lang=lang;
   }
   function tabLanguage(){
     document.documentElement.lang=lang==='zh'?'zh-Hans':'en';
     for(const [el,zh,english] of labels) el.textContent=lang==='en'?english:zh;
     locations();
-    const resource=$('resource'),current=resource.value;
-    resource.replaceChildren(new Option(t('全部战略资源','All strategic resources'),''));
-    for(const k of cat.strategic)resource.add(new Option(local(k),k));
-    resource.value=current;
+    $('symbols').replaceChildren();$('symbols-main').replaceChildren();
+    const primary=new Set(['d_betharian_deposit','minor_artifacts','reward','rare_crystals','exotic_gases','volatile_motes']);
+    for(const [key,symbol] of Object.entries(model.symbols)){
+      const button=document.createElement('button'),glyph=document.createElement('b');
+      glyph.style.color=symbol[2];glyph.textContent=symbol[lang==='en'?1:0];button.append(glyph,' '+tagName(key));
+      button.dataset.symbol=key;
+      button.onclick=()=>{const select=$('resource');select.value=select.value===key?'':key;select.dispatchEvent(new Event('change'));};
+      $(primary.has(key)?'symbols-main':'symbols').append(button);
+    }
     $('lookup').placeholder=t('名称或 #ID','Name or #ID');
-    $('resource').setAttribute('aria-label',t('战略资源类型','Strategic resource type'));
     $('map').setAttribute('aria-label',t('星系地图。可在下方搜索并加选星系。','Galaxy map. Use the system search below for keyboard selection.'));
   }
   function ownerText(r){
@@ -69,36 +106,69 @@
     return kind[r.territory]+' · '+n;
   }
   function title(r){return local(r.s.name)+'  #'+r.s.id;}
-  function describe(r,extended=false) {
-    const opts=map.options,lines=[title(r)+'  ·  '+ownerText(r)];
-    const notes=[...(opts.homes?r.homes:[]),...(opts.events?r.events:[]),...(opts.clues?r.clues:[])];
+  function planetName(p){return local(p.name) || '#'+p.id;}
+  function featureText(key,count,alwaysCount=false){
+    const def=cat.deposits[key];
+    const resources=(def.surfaceStrategic ?? []).map(k=>{
+      const n=def.surfaceYield?.[k];
+      return local(k)+(n?' +'+nf(n*count)+t('/月','/mo'):'');
+    });
+    return featureName(key)+(count>1 || alwaysCount?' ×'+nf(count):'')+(resources.length?' ('+resources.join(' · ')+')':'');
+  }
+  function locationLines(r,opts){
+    const lines=[];
+    for(const {planet,features,orbital} of r.locations){
+      const surface=opts.features?Object.entries(features).filter(([k])=>model.matchesFeature(k,cat.deposits[k],opts.resource)):[];
+      const space=opts.rare?Object.entries(orbital).filter(([k])=>!opts.resource || opts.resource===k):[];
+      if(!surface.length && !space.length)continue;
+      const parts=[];
+      if(surface.length)parts.push(t('地表 · ','Surface · ')+surface.map(([k,n])=>featureText(k,n)).join(t('、',', ')));
+      if(space.length)parts.push(t('轨道 · ','Orbit · ')+space.map(([k,n])=>local(k)+' +'+nf(n)+t('/月','/mo')).join(' · '));
+      lines.push(planetName(planet)+' ('+local(planet.type)+' '+planet.size+')\n  '+parts.join('\n  '));
+    }
+    return lines;
+  }
+  function describe(r,extended=false,symbol) {
+    const opts=symbol?{...map.options,resource:symbol}:map.options,lines=[title(r)+'  ·  '+ownerText(r)];
+    if(symbol)lines.push(tagName(symbol));
+    const prizes=opts.rewards?[...r.prizes].filter(([k])=>!opts.resource || opts.resource==='reward' || opts.resource===k):[];
+    if(prizes.length)lines.push(t('可能获得的遗珍 · ','Possible relic rewards · ')+prizes.map(([k])=>local(k)).join(' · '));
+    const notes=symbol?[]:[...(opts.homes?r.homes:[]),...(opts.events?r.events:[]),...(opts.clues?r.clues:[])];
+    const focusedReward=opts.resource==='reward' || r.prizes.has(opts.resource);
+    for(const [,note] of prizes)if(focusedReward && !notes.some(n=>n.note===note)){
+      const origin=[...r.homes,...r.events].find(n=>n.note===note);
+      if(origin)notes.push(origin);
+    }
     for(const {key,note} of notes){
       lines.push(note.title[lang]);
       const classic=/^(vultaumar|yuhtaan|fen_habbanis|irass|cybrex)_system$/.test(key);
       if(classic)lines.push(t('条件 · 本国正在追踪该先驱者。','Requires the matching precursor chain.'));
       lines.push(note[lang]);
     }
-    if((opts.events && r.events.length) || (opts.homes && r.homes.length)){
+    if(prizes.length || (!symbol && ((opts.events && r.events.length) || (opts.homes && r.homes.length)))){
       lines.push(t('奖励领取状态未知。','Reward claim status unknown.'));
     }
-    if(opts.events){
+    if(opts.events && !symbol){
       const sites=r.sites.map(v=>local(v.key)).filter(name=>!notes.some(({note})=>note.title[lang].includes(name)));
       if(sites.length)lines.push(t('考古点 · ','Sites · ')+sites.join(' · '));
     }
+    const deposits=locationLines(r,opts);
+    lines.push(...(extended?deposits:deposits.slice(0,3)));
+    if(!extended && deposits.length>3)lines.push(t('点击查看全部 '+deposits.length+' 个天体。','Click for all '+deposits.length+' bodies.'));
+    if(symbol)return lines.join('\n');
     if(r.worlds.length){
       const shown=extended?r.worlds:r.worlds.slice(0,6);
       const worlds=shown.map(p=>local(p.type)+' '+p.size+(p.candidate?t('（改造候选）',' (candidate)'):''));
       lines.push(worlds.join(' · ')+(shown.length<r.worlds.length?' +'+(r.worlds.length-shown.length):''));
     }
-    if(opts.rare && r.rare.size)lines.push([...r.rare].map(k=>local(k)+(r.resources[k]?' +'+nf(r.resources[k]):'')+(r.surface[k]?t('（地貌）',' (surface)'):'' )).join(' · '));
     if(opts.relic && r.relic && !r.worlds.some(p=>p.type==='pc_relic'))lines.push(local('pc_relic'));
     if(opts.ruins && r.ruins.length)lines.push([...new Set(r.ruins)].map(local).join(' · '));
     return lines.join('\n');
   }
-  function showHover(id,x,y){
+  function showHover(id,x,y,symbol){
     const target=$('tooltip'),r=rows.get(id);
     if(!r){target.hidden=true;return;}
-    target.textContent=describe(r);target.hidden=false;
+    target.textContent=describe(r,false,symbol);target.hidden=false;
     const plot=$('plot');
     target.style.left=Math.max(3,Math.min(plot.clientWidth-target.offsetWidth-3,x+14))+'px';
     target.style.top=Math.max(3,Math.min(plot.clientHeight-target.offsetHeight-3,y+16))+'px';
@@ -131,6 +201,30 @@
       line.append(label,amount);container.append(line);
     }
   }
+  function featureCounts(counts){
+    const list=$('feature-counts');list.replaceChildren();
+    if(!$('feature-list').open)return;
+    for(const [key,count] of Object.entries(counts).sort((a,b)=>b[1]-a[1])){
+      const entry=document.createElement('details'),head=document.createElement('summary');
+      head.textContent=featureText(key,count,true);entry.append(head);
+      entry.ontoggle=()=>{
+        if(!entry.open || entry.children.length>1)return;
+        const planets=document.createElement('ul');
+        for(const id of selected){
+          const row=rows.get(id);
+          if(!row?.features[key] || !map.options.included.has(row.territory))continue;
+          for(const loc of row.locations)if(loc.features[key]){
+            const item=document.createElement('li'),button=document.createElement('button');
+            button.textContent=local(row.s.name)+' · '+planetName(loc.planet)+' ×'+nf(loc.features[key]);
+            button.onclick=()=>{picked=id;map.focusSystem(id);details();};
+            item.append(button);planets.append(item);
+          }
+        }
+        entry.append(planets);
+      };
+      list.append(entry);
+    }
+  }
   function stats(){
     const v=model.summarize(selected,rows,map.options.included);
     $('count-s').textContent=nf(v.systems);$('count-p').textContent=nf(v.other+v.toxic);
@@ -146,8 +240,14 @@
       }hist.append(row);
     }
     if(!v.bins.size){const msg=document.createElement('p');msg.className='meta';msg.textContent=v.systems?t('没有符合条件的天体。','No matching bodies.'):t('在地图上拖动框选星系。','Drag across systems to select them.');hist.append(msg);}
-    amountRows($('yields'),v.resources,true);amountRows($('surface'),v.surface,false);
-    $('surface-wrap').hidden=!Object.keys(v.surface).length;
+    amountRows($('yields'),v.resources,true);
+    const highlights={...v.surface};
+    if(v.features.d_betharian_deposit)highlights.d_betharian_deposit=v.features.d_betharian_deposit;
+    amountRows($('surface'),highlights,false);amountRows($('direct'),v.surfaceYield,true);
+    $('direct-wrap').hidden=!Object.keys(v.surfaceYield).length;
+    $('surface-wrap').hidden=!Object.keys(v.features).length;
+    featureCounts(v.features);
+    amountRows($('prizes'),v.prizes,false);$('prize-wrap').hidden=!Object.keys(v.prizes).length;
     const messages=[];
     if(v.systems && !Object.keys(v.resources).length)messages.push(t('无已计入的轨道产出。','No counted orbital yield.'));
     if(v.conditional)messages.push(t(v.conditional+' 处含条件产出，条件部分未计入。',v.conditional+' deposits have conditional output excluded from totals.'));
@@ -157,7 +257,19 @@
   function render(geometryChanged=false){
     if(!g)return;
     const opt=options();rows=model.inspect(g,cat,opt,HIGHLIGHTS);
+    if(geometryChanged || $('resource').lang!==lang){
+      filterOptions();
+      if(opt.resource!==$('resource').value){
+        opt.resource=$('resource').value;rows=model.inspect(g,cat,opt,HIGHLIGHTS);
+      }
+    }
     map.options=opt;map.selected=selected;map.setRows(rows,geometryChanged);showHover(null);
+    const count=$('material-count');count.hidden=!opt.resource;
+    if(opt.resource){
+      const n=[...rows.values()].filter(r=>r.materialMarks.length).length;
+      count.textContent=t('当前视角 · '+nf(n)+' 个星系匹配',nf(n)+' matching systems in this view');
+    }
+    for(const button of document.querySelectorAll('[data-symbol]'))button.setAttribute('aria-pressed',String(button.dataset.symbol===opt.resource));
     $('territory-layers').hidden=!opt.territory;
     $('count-unknown').hidden=![...rows.values()].some(r=>r.territory==='unknown');
     if(geometryChanged || !rows.has(picked)) picked=rows.has(g.start)?g.start:(rows.keys().next().value ?? null);
@@ -215,7 +327,15 @@
       map.panMode=id==='pan-mode';$('select-mode').setAttribute('aria-pressed',String(!map.panMode));$('pan-mode').setAttribute('aria-pressed',String(map.panMode));
       $('map').style.cursor=map.panMode?'grab':'crosshair';
     };
-    for(const id of ['scope','toxic','view','sizes','territory','rare','resource','relic','events','homes','ruins','clues']) $(id).onchange=()=>render(id==='view');
+    for(const id of ['scope','toxic','view','sizes','territory','rare','features','rewards','relic','events','homes','ruins','clues']) $(id).onchange=()=>render(id==='view');
+    $('resource').onchange=()=>{
+      const key=$('resource').value;
+      if(key==='reward' || key.startsWith('r_'))$('rewards').checked=true;
+      else if(key==='feature' || key.startsWith('d_'))$('features').checked=true;
+      else if(key && !$('rare').checked && !$('features').checked){$('rare').checked=true;$('features').checked=true;}
+      render();
+    };
+    $('feature-list').ontoggle=stats;
     for(const input of document.querySelectorAll('[data-shade],[data-count]')) input.onchange=()=>{
       map.options=options();map.queue();stats();
     };

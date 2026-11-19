@@ -2,7 +2,9 @@
 
 Open a Stellaris text-format `.sav` in your browser and drag across the map to count planets by size. Ctrl-click a system or Ctrl-drag another rectangle to toggle its membership. Scroll to zoom. Drag in Pan mode to move the map.
 
-The world filters control both size labels and the size distribution. Toxic worlds have their own column and can be limited to terraforming candidates. The territory overlay colors player systems green, regular NPC systems blue and Fallen Empires orange, including awakened Fallen Empires. Under **Territory to count**, choose which owners to include in the selection totals. Unclaimed systems always count. Orbital yields use eligible deposits in the counted systems, regardless of the planet-size filter. Surface strategic deposits are counted as features because their production depends on jobs.
+The world filters control both size labels and the size distribution. Toxic worlds have their own column and can be limited to terraforming candidates. The territory overlay colors player systems green, regular NPC systems blue and Fallen Empires orange, including awakened Fallen Empires. Under **Territory to count**, choose which owners to include in the selection totals. Unclaimed systems always count. Orbital yields use eligible deposits in the counted systems, regardless of the planet-size filter.
+
+The resource key beside the map lets you highlight a single material or feature. Hover over a symbol to see which planet has it. Betharian Fields, Minor Artifacts deposits and possible relic rewards have separate symbols. The selection panel lists feature counts and fixed surface yields. Expand a feature to find its systems and planets. Job bonuses and event rewards are listed separately from fixed production.
 
 Player records show charted systems, surveyed bodies and known dig sites. Foreign ownership requires system intel and diplomatic contact. The full-save view also shows hidden deposits, precursor regions, destinations and ruined megastructures. Hover over an event or dig site (✦) or a precursor home system (★) to see its name. Where a reward is known, the tooltip gives its conditions.
 

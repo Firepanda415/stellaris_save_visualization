@@ -14,10 +14,16 @@
 <label class="field short"><span data-i="min">最小规模</span><input id="min" type="number" min="0" step="1" value="0"></label></section>
 <section><h3 data-i="layers">叠加显示</h3>
 <label><input id="territory" type="checkbox" checked><span data-i="territory">势力范围</span></label>
+<div id="territory-layers" class="territory-options">
+<label><input type="checkbox" data-shade="player" checked><span data-i="playerTerr">玩家自己</span></label>
+<label><input type="checkbox" data-shade="npc" checked><span data-i="npcTerr">普通 NPC</span></label>
+<label><input type="checkbox" data-shade="fallen" checked><span data-i="fallenTerr">堕落帝国</span></label>
+</div>
 <label><input id="rare" type="checkbox" checked><span class="mark resource">◆</span><span data-i="rare">战略资源</span></label>
 <label class="field"><select id="resource" aria-label="Strategic resource"></select></label>
 <label><input id="relic" type="checkbox" checked><span class="mark relic">◇</span><span data-i="relic">遗落星球</span></label>
-<label><input id="events" type="checkbox" checked><span class="mark event">✦</span><span data-i="events">事件与先驱者母星</span></label>
+<label><input id="events" type="checkbox" checked><span class="mark event">✦</span><span data-i="events">特殊事件与考古点</span></label>
+<label><input id="homes" type="checkbox" checked><span class="mark home-marker">★</span><span data-i="homes">先驱者母星系</span></label>
 <label><input id="clues" type="checkbox"><span class="mark clue">·</span><span data-i="clues">先驱者线索区域</span></label>
 <label><input id="ruins" type="checkbox" checked><span class="mark ruin">▣</span><span data-i="ruins">巨构废墟</span></label></section>
 </aside>
@@ -28,7 +34,12 @@
 <div id="system-detail" class="system-detail" aria-live="polite"></div>
 </section>
 <aside class="results"><div class="result-heading"><h2 data-i="selection">选区统计</h2><button id="clear" data-i="clear">清空</button></div>
-<label class="ownership"><input type="checkbox" id="foreign"><span data-i="foreign">计入其他势力的星系</span></label>
+<fieldset class="ownership-options"><legend data-i="countTerritory">计入选区的领地</legend>
+<label><input type="checkbox" data-count="player" checked><span data-i="playerTerr">玩家自己</span></label>
+<label><input type="checkbox" data-count="npc"><span data-i="npcTerr">普通 NPC</span></label>
+<label><input type="checkbox" data-count="fallen"><span data-i="fallenTerr">堕落帝国</span></label>
+<label id="count-unknown" hidden><input type="checkbox" data-count="unknown"><span data-i="unknownTerr">归属未知</span></label>
+<span class="meta" data-i="freeTerr">无主星系始终计入。</span></fieldset>
 <div class="metrics"><div><strong id="count-s">0</strong><span data-i="systems">星系</span></div><div><strong id="count-p">0</strong><span data-i="matched">符合筛选的天体</span></div></div>
 <div id="excluded" class="meta"></div><section><h3 data-i="distribution">规模分布</h3><div class="hist-head"><span data-i="size">规模</span><span class="regular" data-i="other">非剧毒</span><span class="toxic" data-i="toxicShort">剧毒</span></div><div id="hist"></div></section>
 <section><h3 data-i="output">轨道资源</h3><p class="meta" data-i="gross">按计入星系的矿藏计算基础月产。规模筛选只影响行星。玩家视角只计已调查天体。</p><div id="yields"></div><div id="exceptions" class="meta"></div></section>

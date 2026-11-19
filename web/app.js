@@ -5,10 +5,12 @@
     subtitle:'Stellaris save map',open:'Open save',filters:'Map layers',view:'View',all:'Full save',known:'Player records',
     worlds:'Planets',sizeLabels:'Label planet sizes',pool:'Non-toxic bodies',colony:'Colonizable types & candidates',bodies:'All bodies, including stars',
     toxic:'Toxic worlds',allToxic:'Include all',candidate:'Terraforming candidates only',off:'Hide and exclude',min:'Minimum size',
-    layers:'Overlays',territory:'Empire territory',rare:'Strategic resources',relic:'Relic worlds',events:'Events & precursor homes',
+    layers:'Overlays',territory:'Empire territory',rare:'Strategic resources',relic:'Relic worlds',events:'Events & dig sites',homes:'Precursor home systems',
+    playerTerr:'Player',npcTerr:'Regular NPC',fallenTerr:'Fallen Empire',unknownTerr:'Unknown owner',
+    countTerritory:'Territory to count',freeTerr:'Unclaimed systems always count.',
     clues:'Precursor clue regions',ruins:'Ruined megastructures',fit:'Fit',select:'Select',pan:'Pan',
     gesture:'Drag to select · Ctrl-click or Ctrl-drag to toggle · Scroll to zoom',inspect:'Inspect system',toggle:'Toggle selection',
-    selection:'Selection',clear:'Clear',foreign:'Include foreign territory',systems:'Systems',matched:'Matching bodies',
+    selection:'Selection',clear:'Clear',systems:'Systems',matched:'Matching bodies',
     distribution:'Size distribution',size:'Size',other:'Non-toxic',toxicShort:'Toxic',output:'Orbital resources',
     gross:'Base monthly yield in counted systems, across all sizes. Player records include only surveyed bodies.',
     surface:'Surface resources',surfaceHint:'Number of features. Output depends on jobs.',locations:'Windows save locations'
@@ -42,8 +44,10 @@
     }
   }
   function options(){
+    const checked=attribute=>new Set([...document.querySelectorAll('[data-'+attribute+']:checked')].map(el=>el.dataset[attribute]));
     return {min:Math.max(0,Number($('min').value)||0),toxic:$('toxic').value,scope:$('scope').value,view:$('view').value,
-      resource:$('resource').value,player:g?.player,lang,...Object.fromEntries(['sizes','foreign','territory','rare','relic','events','ruins','clues'].map(k=>[k,$(k).checked]))};
+      resource:$('resource').value,shaded:checked('shade'),included:checked('count').add('unclaimed'),lang,
+      ...Object.fromEntries(['sizes','territory','rare','relic','events','homes','ruins','clues'].map(k=>[k,$(k).checked]))};
   }
   function tabLanguage(){
     document.documentElement.lang=lang==='zh'?'zh-Hans':'en';
@@ -61,11 +65,26 @@
     if(r.owner===null)return t('无主','Unclaimed');
     if(r.owner==='?')return t('归属未知','Unknown territory');
     const n=local(g.countries[r.owner]) || '#'+r.owner;
-    return r.owner===g.player?t('己方 · ','Player · ')+n:n;
+    const kind={player:t('玩家自己','Player'),npc:t('普通 NPC','Regular NPC'),fallen:t('堕落帝国','Fallen Empire')};
+    return kind[r.territory]+' · '+n;
   }
   function title(r){return local(r.s.name)+'  #'+r.s.id;}
   function describe(r,extended=false) {
     const opts=map.options,lines=[title(r)+'  ·  '+ownerText(r)];
+    const notes=[...(opts.homes?r.homes:[]),...(opts.events?r.events:[]),...(opts.clues?r.clues:[])];
+    for(const {key,note} of notes){
+      lines.push(note.title[lang]);
+      const classic=/^(vultaumar|yuhtaan|fen_habbanis|irass|cybrex)_system$/.test(key);
+      if(classic)lines.push(t('条件 · 本国正在追踪该先驱者。','Requires the matching precursor chain.'));
+      lines.push(note[lang]);
+    }
+    if((opts.events && r.events.length) || (opts.homes && r.homes.length)){
+      lines.push(t('奖励领取状态未知。','Reward claim status unknown.'));
+    }
+    if(opts.events){
+      const sites=r.sites.map(v=>local(v.key)).filter(name=>!notes.some(({note})=>note.title[lang].includes(name)));
+      if(sites.length)lines.push(t('考古点 · ','Sites · ')+sites.join(' · '));
+    }
     if(r.worlds.length){
       const shown=extended?r.worlds:r.worlds.slice(0,6);
       const worlds=shown.map(p=>local(p.type)+' '+p.size+(p.candidate?t('（改造候选）',' (candidate)'):''));
@@ -74,13 +93,6 @@
     if(opts.rare && r.rare.size)lines.push([...r.rare].map(k=>local(k)+(r.resources[k]?' +'+nf(r.resources[k]):'')+(r.surface[k]?t('（地貌）',' (surface)'):'' )).join(' · '));
     if(opts.relic && r.relic && !r.worlds.some(p=>p.type==='pc_relic'))lines.push(local('pc_relic'));
     if(opts.ruins && r.ruins.length)lines.push([...new Set(r.ruins)].map(local).join(' · '));
-    if(opts.events && r.sites.length)lines.push(t('考古点 · ','Sites · ')+r.sites.map(v=>local(v.key)).join(' · '));
-    const notes=[...(opts.events?r.events:[]),...(opts.clues?r.clues:[])];
-    if(opts.events && r.events.length)lines.push(t('事件可能收益（领取状态未知）','Possible event rewards (claim status unknown)'));
-    for(const {key,note} of notes){
-      const classic=/^(vultaumar|yuhtaan|fen_habbanis|irass|cybrex)_system$/.test(key);
-      lines.push((classic?t('本国正在追踪该先驱者时，','While following this precursor chain: '):'')+note[lang]);
-    }
     return lines.join('\n');
   }
   function showHover(id,x,y){
@@ -120,9 +132,9 @@
     }
   }
   function stats(){
-    const v=model.summarize(selected,rows,$('foreign').checked,g.player);
+    const v=model.summarize(selected,rows,map.options.included);
     $('count-s').textContent=nf(v.systems);$('count-p').textContent=nf(v.other+v.toxic);
-    $('excluded').textContent=v.excluded?t('已略过 '+v.excluded+' 个他国或归属未知星系。','Excluded '+v.excluded+' foreign or unknown systems.'):'';
+    $('excluded').textContent=v.excluded?t('按领地筛选略过 '+v.excluded+' 个星系。','Territory filters excluded '+v.excluded+' systems.'):'';
     const hist=$('hist');hist.replaceChildren();
     const max=Math.max(1,...[...v.bins.values()].flat());
     for(const [size,counts] of [...v.bins].sort((a,b)=>b[0]-a[0])){
@@ -146,6 +158,8 @@
     if(!g)return;
     const opt=options();rows=model.inspect(g,cat,opt,HIGHLIGHTS);
     map.options=opt;map.selected=selected;map.setRows(rows,geometryChanged);showHover(null);
+    $('territory-layers').hidden=!opt.territory;
+    $('count-unknown').hidden=![...rows.values()].some(r=>r.territory==='unknown');
     if(geometryChanged || !rows.has(picked)) picked=rows.has(g.start)?g.start:(rows.keys().next().value ?? null);
     if(geometryChanged || $('systems').lang!==lang){
       const frag=document.createDocumentFragment();
@@ -201,7 +215,10 @@
       map.panMode=id==='pan-mode';$('select-mode').setAttribute('aria-pressed',String(!map.panMode));$('pan-mode').setAttribute('aria-pressed',String(map.panMode));
       $('map').style.cursor=map.panMode?'grab':'crosshair';
     };
-    for(const id of ['scope','toxic','view','sizes','foreign','territory','rare','resource','relic','events','ruins','clues']) $(id).onchange=()=>render(id==='view');
+    for(const id of ['scope','toxic','view','sizes','territory','rare','resource','relic','events','homes','ruins','clues']) $(id).onchange=()=>render(id==='view');
+    for(const input of document.querySelectorAll('[data-shade],[data-count]')) input.onchange=()=>{
+      map.options=options();map.queue();stats();
+    };
     $('min').oninput=()=>render();
     document.addEventListener('dragover',e=>{if(e.dataTransfer.types.includes('Files'))e.preventDefault();});
     document.addEventListener('drop',e=>{if(e.dataTransfer.files.length){e.preventDefault();load(e.dataTransfer.files[0]);}});

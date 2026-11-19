@@ -1,4 +1,7 @@
 :root {
+  --territory-player:#75d6ac;
+  --territory-npc:#82aeed;
+  --territory-fallen:#efad62;
   color-scheme:dark;
   --bg:#0d1519;
   --panel:#142127;
@@ -164,7 +167,7 @@ aside section {
   border-right:1px solid var(--line);
 }
 
-.filters label,.ownership {
+.filters label,.ownership-options label {
   display:flex;
   align-items:center;
   gap:8px;
@@ -354,9 +357,25 @@ canvas {
   margin:0;
 }
 
-.ownership {
-  margin:15px 0;
+.territory-options,.ownership-options {
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:4px 12px;
 }
+.territory-options { margin:4px 0 12px 22px; }
+.territory-options label,.ownership-options label { margin:1px 0; }
+input[data-shade=player],input[data-count=player] {accent-color:var(--territory-player);}
+input[data-shade=npc],input[data-count=npc] {accent-color:var(--territory-npc);}
+input[data-shade=fallen],input[data-count=fallen] {accent-color:var(--territory-fallen);}
+.home-marker {color:#bfabff;}
+.ownership-options {
+  border:0;
+  margin:14px 0;
+  padding:0;
+}
+.ownership-options legend {font-size:.85rem;color:var(--muted);margin-bottom:6px;}
+.ownership-options .meta {flex-basis:100%;}
 
 .metrics {
   gap:25px;

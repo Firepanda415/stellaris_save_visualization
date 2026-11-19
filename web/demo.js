@@ -28,5 +28,6 @@ function exampleGalaxy() {
     const nearest=systems.filter(o=>o!==s).sort((a,b)=>Math.hypot(a.x-s.x,a.y-s.y)-Math.hypot(b.x-s.x,b.y-s.y)).slice(0,3);
     for(const o of nearest) if(!s.lanes.includes(o.id)){s.lanes.push(o.id);o.lanes.push(s.id);}
   }
-  return {demo:true,date:'2200.01.01',version:'4.5',player:'0',start:'1',countries:{0:'Lyra',1:'Vela',2:'Carina'},systems};
+  return {demo:true,date:'2200.01.01',version:'4.5',player:'0',start:'1',countries:{0:'Lyra',1:'Vela',2:'Carina'},
+    countryTypes:{0:'default',1:'default',2:'fallen_empire'},systems};
 }

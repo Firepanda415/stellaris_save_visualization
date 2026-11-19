@@ -4,7 +4,7 @@
   const all = true;
   const table = fields => ({'*': fields});
   const country = {
-    name: all, terra_incognita: {systems: all}, surveyed_deposit_holders: all,
+    name: all, type: all, terra_incognita: {systems: all}, surveyed_deposit_holders: all,
     intel_level: all, hyperlane_systems: all, starting_system: all,
     fleets_manager: {owned_fleets: all}, events: {anomalies: all}, relations_manager: {relation: {country: all, contact: all}}
   };
@@ -91,9 +91,10 @@
     const intel = list(home,'intel_level'), laneIntel = new Set(list(home,'hyperlane_systems'));
     const anomalies = new Set(list(one(home,'events'),'anomalies'));
     const contacts = new Set((one(home,'relations_manager')?.relation ?? []).filter(r=>one(r,'contact')==='yes').map(r=>one(r,'country')));
-    const fleetOwner = new Map(), nations = Object.create(null);
+    const fleetOwner = new Map(), nations = Object.create(null), countryTypes = Object.create(null);
     for (const [id,[c]] of entries(countries)) {
       nations[id] = name(one(c,'name')) || '#'+id;
+      countryTypes[id] = one(c,'type');
       for (const f of list(one(c,'fleets_manager'),'owned_fleets')) {
         const fleet = one(f,'fleet');
         if (valid(fleet) && ['normal','lost_control',undefined].includes(one(f,'ownership_status'))) fleetOwner.set(fleet,id);
@@ -147,7 +148,7 @@
     }
     if (!systemMap.size || !home) throw Error('No player galaxy in text save');
     return {version:one(raw,'version'),date:one(raw,'date'),player,start:one(home,'starting_system'),
-      countries:nations,systems:[...systemMap.values()]};
+      countries:nations,countryTypes,systems:[...systemMap.values()]};
   }
   async function readFile(file) {
     const footer = new Uint8Array(await file.slice(Math.max(0,file.size-65557)).arrayBuffer());

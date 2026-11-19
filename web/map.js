@@ -4,10 +4,8 @@
     rare_crystals:['晶','C'],exotic_gases:['气','G'],volatile_motes:['微','M'],sr_zro:['泽','Z'],
     sr_dark_matter:['暗','D'],sr_living_metal:['活','L'],nanites:['纳','N'],minor_artifacts:['文','A'],astral_threads:['丝','T']
   };
-  function color(id) {
-    if(id===null || id==='?') return '#8b999f';
-    return 'hsl('+((Number(id)*137.508+158)%360)+' 48% 66%)';
-  }
+  // The game's default galaxy view places positive save X to the left.
+  const mapX=x=>-x;
   // Clip each territory cell against nearby systems. The radius leaves empty inter-arm space unclaimed.
   function territoryCells(rows) {
     if(!rows.length) return new Map();
@@ -42,8 +40,11 @@
   class GalaxyMap {
     constructor(canvas,handlers) {
       this.canvas=canvas;this.ctx=canvas.getContext('2d');this.handlers=handlers;
+      const style=getComputedStyle(canvas);
+      this.colors=Object.fromEntries(['player','npc','fallen'].map(k=>[k,style.getPropertyValue('--territory-'+k).trim()]));
       this.rows=new Map();this.selected=new Set();this.zoom=1;this.center=[0,0];this.panMode=false;
       this.options={};this.pick=null;this.drag=null;this.frame=0;
+      this.markerHits=[];
       new ResizeObserver(()=>this.resize()).observe(canvas);
       canvas.addEventListener('pointerdown',e=>this.down(e));
       canvas.addEventListener('pointermove',e=>this.move(e));
@@ -83,12 +84,12 @@
       if(points.length){
         const xs=points.map(s=>s.x),ys=points.map(s=>s.y);
         const l=Math.min(...xs),r=Math.max(...xs),t=Math.min(...ys),b=Math.max(...ys);
-        this.center=[(l+r)/2,(t+b)/2];this.extent=[Math.max(20,r-l),Math.max(20,b-t)];
+        this.center=[mapX((l+r)/2),(t+b)/2];this.extent=[Math.max(20,r-l),Math.max(20,b-t)];
       }
       this.zoom=1;this.queue();
     }
     get scale(){return Math.min(Math.max(this.w-50,1)/(this.extent?.[0]||1), Math.max(this.h-46,1)/(this.extent?.[1]||1))*this.zoom;}
-    xy(x,y){return [(x-this.center[0])*this.scale+this.w/2,(y-this.center[1])*this.scale+this.h/2];}
+    xy(x,y){return [(mapX(x)-this.center[0])*this.scale+this.w/2,(y-this.center[1])*this.scale+this.h/2];}
     pos(e){const b=this.canvas.getBoundingClientRect();return [e.clientX-b.left,e.clientY-b.top];}
     adjustZoom(f,x=this.w/2,y=this.h/2){
       const old=this.scale; this.zoom=Math.min(35,Math.max(.45,this.zoom*f));
@@ -100,6 +101,11 @@
       for(const {s} of this.rows.values()){
         const [sx,sy]=this.xy(s.x,s.y),d=(x-sx)**2+(y-sy)**2;
         if(d<limit){limit=d;best=s.id;}
+      }
+      if(limit>16){
+        for(const mark of this.markerHits){
+          if(x>=mark.left && x<=mark.right && y>=mark.top && y<=mark.bottom) return mark.id;
+        }
       }
       return best;
     }
@@ -145,12 +151,13 @@
       ctx.fillStyle='#739198';ctx.globalAlpha=.33;
       for(let i=1;i<=160;i++){const x=((i*7919)%197)/197*this.w,y=((i*i*491+37*i)%331)/331*this.h;ctx.fillRect(x,y,1,1);}
       ctx.globalAlpha=1;
-      ctx.save();ctx.translate(this.w/2,this.h/2);ctx.scale(scale,scale);ctx.translate(-this.center[0],-this.center[1]);
+      ctx.save();ctx.translate(...this.xy(0,0));ctx.scale(mapX(scale),scale);
       if(opts.territory && this.cells){
         ctx.globalAlpha=.24;
         for(const [id,pts] of this.cells){
-          if(!pts.length)continue;
-          ctx.fillStyle=color(this.rows.get(id).owner);ctx.beginPath();ctx.moveTo(...pts[0]);for(let i=1;i<pts.length;i++)ctx.lineTo(...pts[i]);ctx.closePath();ctx.fill();
+          const kind=this.rows.get(id).territory;
+          if(!pts.length || !opts.shaded.has(kind))continue;
+          ctx.fillStyle=this.colors[kind];ctx.beginPath();ctx.moveTo(...pts[0]);for(let i=1;i<pts.length;i++)ctx.lineTo(...pts[i]);ctx.closePath();ctx.fill();
         }
         ctx.globalAlpha=1;
       }
@@ -162,15 +169,16 @@
       }ctx.stroke();ctx.restore();
       ctx.font='600 11px "Segoe UI", sans-serif';ctx.textBaseline='middle';
       const visible=[];
+      this.markerHits=[];
       for(const r of this.rows.values()){
-        const {s,owner}=r,[x,y]=this.xy(s.x,s.y);
+        const {s,territory}=r,[x,y]=this.xy(s.x,s.y);
         if(x< -45||y< -15||x>this.w+12||y>this.h+12)continue;
-        const selected=this.selected.has(s.id) && (opts.foreign || owner===null || owner===opts.player);
+        const selected=this.selected.has(s.id) && opts.included.has(territory);
         const rad=selected?3.6:this.zoom>2?3.1:2.15;
-        ctx.fillStyle=selected?'#b0f9d2':opts.territory && owner!==null && owner!=='?'?color(owner):'#9cadb1';
+        ctx.fillStyle=opts.territory && opts.shaded.has(territory)?this.colors[territory]:selected?'#d9efdf':'#9cadb1';
         ctx.beginPath();ctx.arc(x,y,rad,0,2*Math.PI);ctx.fill();
         if((selected && (this.selected.size<80 || this.zoom>2)) || this.pick===s.id){ctx.strokeStyle=this.pick===s.id?'#fff4cc':'#73d6b9';ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(x,y,rad+2.5,0,Math.PI*2);ctx.stroke();}
-        visible.push({r,x,y,priority:(this.pick===s.id?1000:0)+(r.relic||r.ruins.length||r.events.length?80:0)+(r.worlds[0]?.size||0)});
+        visible.push({r,x,y,priority:(this.pick===s.id?1000:0)+(r.relic||r.ruins.length||r.events.length||r.homes.length?80:0)+(r.worlds[0]?.size||0)});
       }
       visible.sort((a,b)=>b.priority-a.priority);
       const occupied=new Set();
@@ -204,11 +212,13 @@
         }
         if(opts.relic && r.relic)marks.push(['◇','#dba5f0']);
         if(opts.ruins && r.ruins.length)marks.push(['▣','#ef9b7c']);
-        if(opts.events && r.events.length)marks.push(['✦','#ffd094']);
+        if(opts.events && (r.events.length || r.sites.length))marks.push(['✦','#ffd094']);
+        if(opts.homes && r.homes.length)marks.push(['★','#bfabff']);
         if(opts.clues && r.clues.length)marks.push(['•','#f3d99a']);
         let mx=x+3;
         if(marks.length){
           if(space(mx,y+9,marks.length*11)){
+            this.markerHits.push({id:r.s.id,left:mx,right:mx+marks.length*11,top:y+3,bottom:y+15});
             for(const [text,c] of marks){ctx.fillStyle=c;ctx.fillText(text,mx,y+9);mx+=11;}
           }else{
             ctx.fillStyle=marks[0][1];ctx.fillRect(x-2,y+3,4,2);

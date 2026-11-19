@@ -19,14 +19,19 @@
     for(const s of g.systems) {
       if(opt.view==='player' && !s.known) continue;
       const full=opt.view==='all', owner=full || s.ownerKnown ? s.owner : '?';
-      const row={s,owner,worlds:[],resources:{},surface:{},conditional:0,unknown:new Set(),rare:new Set(),
-        relic:false,ruins:[],events:[],clues:[],sites:[]};
+      let territory='npc';
+      if(owner===null) territory='unclaimed';
+      else if(owner==='?') territory='unknown';
+      else if(owner===g.player) territory='player';
+      else if(['fallen_empire','awakened_fallen_empire'].includes(g.countryTypes?.[owner])) territory='fallen';
+      const row={s,owner,territory,worlds:[],resources:{},surface:{},conditional:0,unknown:new Set(),rare:new Set(),
+        relic:false,ruins:[],events:[],homes:[],clues:[],sites:[]};
       const seen=new Set();
       function event(key,group) {
         const note=highlights[key];
         if(!note || seen.has(note)) return;
         seen.add(note);
-        row[group].push({key,note});
+        row[note.home?'homes':group].push({key,note});
       }
       for(const p of s.planets) {
         const visible=full || p.survey;
@@ -65,12 +70,12 @@
     }
     return systems;
   }
-  function summarize(ids,rows,foreign,player) {
+  function summarize(ids,rows,included) {
     const totals={systems:0,excluded:0,toxic:0,other:0,bins:new Map(),resources:{},surface:{},conditional:0,unknown:new Set()};
     for(const id of ids) {
       const row=rows.get(id);
       if(!row) continue;
-      if(!foreign && row.owner!==null && row.owner!==player){totals.excluded++;continue;}
+      if(!included.has(row.territory)){totals.excluded++;continue;}
       totals.systems++;
       for(const p of row.worlds) {
         const toxic=p.type==='pc_toxic';

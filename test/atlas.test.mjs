@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import '../web/reader.js';
 import '../web/model.js';
+import '../web/map.js';
 import '../web/highlights.js';
 
 const catalog=JSON.parse(await readFile(new URL('../web/catalog.json',import.meta.url),'utf8'));
@@ -31,12 +32,46 @@ megastructures={7={type=think_tank_ruined coordinate={origin=3}}}`;
 const galaxy=await GalaxyReader.readFile(new Blob([source]));
 const opts={scope:'colony',toxic:'all',min:15,view:'all'};
 const inspect=opt=>GalaxyModel.inspect(galaxy,catalog,{...opts,...opt},HIGHLIGHTS);
-const stats=(r,foreign=false)=>GalaxyModel.summarize(new Set(['3','4','5']),r,foreign,'0');
+const stats=(r,foreign=false)=>GalaxyModel.summarize(new Set(['3','4','5']),r,
+  new Set(foreign?['unclaimed','player','npc','fallen','unknown']:['unclaimed','player']));
 
 test('sovereignty uses the primary station, including slot zero, independently of occupation',()=>{
   assert.deepEqual(galaxy.systems.map(s=>s.owner),['0','1',null]);
   assert.equal(galaxy.systems[0].planets[0].name,'a } literal');
   assert.deepEqual(galaxy.systems[0].lanes,['4']);
+});
+test('fallen and awakened owners are a distinct territory category after intel checks',async()=>{
+  for(const [type,kind] of [['fallen_empire','fallen'],['awakened_fallen_empire','fallen'],['awakened_marauders','npc']]){
+    const save=source.replace('1={name={key="Foreign"}','1={type='+type+' name={key="Foreign"}')
+      .replace('systems={3}','systems={3 4}');
+    const g=await GalaxyReader.readFile(new Blob([save]));
+    const full=GalaxyModel.inspect(g,catalog,opts,HIGHLIGHTS);
+    assert.deepEqual([...full.values()].map(r=>r.territory),['player',kind,'unclaimed']);
+    assert.equal(GalaxyModel.summarize(new Set(['3','4','5']),full,new Set(['fallen','unclaimed'])).systems,kind==='fallen'?2:1);
+    const fog=GalaxyModel.inspect(g,catalog,{...opts,view:'player'},HIGHLIGHTS);
+    assert.equal(fog.get('4').territory,'unknown');
+  }
+});
+test('positive save X is west and picking stays anchored when zooming',()=>{
+  const map=Object.create(GalaxyMap.prototype);
+  Object.assign(map,{rows:new Map([['west',{s:{id:'west',x:118,y:-47}}],['east',{s:{id:'east',x:-318,y:53}}]]),
+    w:800,h:500,markerHits:[],queue(){},handlers:{hover(){}}});
+  map.fit();
+  const [west,north]=map.xy(118,-47),[east,south]=map.xy(-318,53);
+  assert.ok(west<east && north<south);
+  assert.equal(map.hit(west,north),'west');
+  map.adjustZoom(2,west,north);
+  assert.ok(Math.abs(map.xy(118,-47)[0]-west)<1e-8);
+  assert.equal(map.hit(west,north),'west');
+});
+test('precursor homes, regions and named events have independent markers and bilingual titles',()=>{
+  for(const note of Object.values(HIGHLIGHTS)){assert.ok(note.title.zh);assert.ok(note.title.en);}
+  const s={...galaxy.systems[1],init:'vultaumar_system',flags:['precursor_1'],
+    sites:[{key:'last_thought_site',known:false}]};
+  const row=GalaxyModel.inspect({...galaxy,systems:[s]},catalog,opts,HIGHLIGHTS).get('4');
+  assert.equal(row.homes.length,1);assert.match(row.homes[0].note.title.zh,/沃陶姆/);
+  assert.equal(row.events.length,1);assert.match(row.events[0].note.title.en,/Last Thought/);
+  assert.equal(row.clues.length,1);assert.match(row.clues[0].note.title.en,/Vultaum/);
 });
 test('size bins separate toxic worlds and apply the territory and world filters',()=>{
   assert.deepEqual(stats(inspect()).bins.get(15),[1,1]);

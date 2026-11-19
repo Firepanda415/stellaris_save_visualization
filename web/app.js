@@ -122,11 +122,12 @@
     header.textContent=title(r)+' · '+ownerText(r);sheet.append(header);
     function section(name){
       const block=document.createElement('section'),heading=document.createElement('h4');
-      heading.textContent=name;block.append(heading);sheet.append(block);return block;
+      heading.textContent=name;block.append(heading);return block;
     }
     function item(block,name,detail=''){
       const line=document.createElement('div');line.className='sheet-item';line.textContent=name;
       if(detail){const sub=document.createElement('div');sub.className='sheet-sub';sub.textContent=detail;line.append(sub);}
+      if(!block.parentNode)sheet.append(block);
       block.append(line);
     }
     const yieldsText=entries=>entries.map(([k,n])=>local(k)+' +'+nf(n)+t('/月','/mo')).join(' · ');
@@ -134,12 +135,12 @@
     const resources=section(t('星系资源','System resources'));
     const orbital=Object.entries(r.resources);
     const strategic=orbital.filter(([k])=>r.orbitalRare.has(k));
-    item(resources,t('轨道战略资源 · ','Orbital strategic resources · ')+(yieldsText(strategic)||t('暂无已知矿藏','None recorded')));
+    if(strategic.length)item(resources,t('轨道战略资源 · ','Orbital strategic resources · ')+yieldsText(strategic));
     const others=orbital.filter(([k])=>!r.orbitalRare.has(k));
-    if(others.length)item(resources,t('其他轨道基础月产 · ','Other base orbital yields · ')+yieldsText(others));
+    if(others.length)item(resources,t('常规轨道基础月产 · ','Standard orbital base yields · ')+yieldsText(others));
     const surface=Object.entries(r.surface);
     if(r.features.d_betharian_deposit)surface.push(['d_betharian_deposit',r.features.d_betharian_deposit]);
-    item(resources,t('地表资源与地貌（处）· ','Surface resource sites (count) · ')+(sitesText(surface)||t('暂无已知地点','None recorded')));
+    if(surface.length)item(resources,t('地表资源与地貌（处）· ','Surface resource sites (count) · ')+sitesText(surface));
     if(Object.keys(r.surfaceYield).length)item(resources,t('固定地表基础月产 · ','Fixed base surface yields · ')+yieldsText(Object.entries(r.surfaceYield)));
     if(r.conditional)item(resources,t('含条件产出的矿藏 · ','Deposits with uncounted conditional yields · ')+r.conditional);
     if(r.unknown.size)item(resources,t('未识别矿藏 · ','Unmapped deposits · ')+[...r.unknown].join(', '));
@@ -156,16 +157,15 @@
     for(const p of r.worlds){
       const size=t(nf(p.size)+' 格','Size '+nf(p.size));
       const label=planetName(p)+' · '+local(p.type)+' · '+size+(p.candidate?t(' · 改造候选',' · Terraforming candidate'):'');
-      item(worlds,label,deposits(locations.get(p.id))||t('暂无已知特殊资源或地貌','No special deposits or features recorded'));
+      item(worlds,label,deposits(locations.get(p.id)));
       locations.delete(p.id);
     }
-    if(!r.worlds.length)item(worlds,t('当前视角下没有符合条件的天体。','No matching bodies in this view.'));
     if(locations.size){
       const other=section(t('筛选范围外的资源地点','Resource sites outside the planet filter'));
       for(const loc of locations.values())item(other,planetName(loc.planet),deposits(loc));
     }
 
-    const landmarks=section(t('遗迹、考古、异常与巨构','Relics, dig sites, anomalies & megastructures'));
+    const landmarks=section(t('星系地点','System locations'));
     if(r.relicWorlds.length)item(landmarks,local('pc_relic')+' · '+r.relicWorlds.map(planetName).join(', '));
     for(const site of r.sites){
       const host=r.s.planets.find(p=>p.id===site.planetId);
@@ -180,11 +180,10 @@
       for(const k of keys)counts[k]=(counts[k]||0)+1;
       item(landmarks,heading+sitesText(Object.entries(counts)));
     }
-    if(landmarks.childElementCount===1)item(landmarks,t('暂无已知记录。','None recorded in this view.'));
 
     const notes=[...r.homes,...r.events,...r.clues];
     if(notes.length){
-      const events=section(t('事件与先驱者','Events & precursors'));
+      const events=section(t('事件记录','Event records'));
       for(const {key,note} of notes){
         const classic=/^(vultaumar|yuhtaan|fen_habbanis|irass|cybrex)_system$/.test(key);
         const description=[];

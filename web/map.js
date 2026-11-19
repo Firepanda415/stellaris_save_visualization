@@ -46,7 +46,7 @@
       canvas.addEventListener('pointermove',e=>this.move(e));
       canvas.addEventListener('pointerup',e=>this.up(e));
       canvas.addEventListener('pointercancel',()=>{this.drag=null;this.queue();});
-      canvas.addEventListener('pointerleave',()=>{if(!this.drag)this.handlers.hover(null);});
+      canvas.addEventListener('pointerleave',e=>{if(!this.drag)this.handlers.leave(e.relatedTarget);});
       canvas.addEventListener('contextmenu',e=>e.preventDefault());
       canvas.addEventListener('wheel',e=>{e.preventDefault();this.adjustZoom(Math.exp(-Math.sign(e.deltaY)*.2),...this.pos(e));},{passive:false});
       canvas.addEventListener('keydown',e=>{
@@ -71,6 +71,7 @@
     }
     resize(){
       const b=this.canvas.getBoundingClientRect();this.w=b.width;this.h=b.height;
+      this.handlers.hover(null);
       this.dpr=Math.min(window.devicePixelRatio || 1,2);
       this.canvas.width=Math.round(this.w*this.dpr);this.canvas.height=Math.round(this.h*this.dpr);
       this.queue();
@@ -125,7 +126,11 @@
     }
     move(e){
       const [x,y]=this.pos(e),d=this.drag;
-      if(!d){const target=this.targetAt(x,y);this.handlers.hover(target?.id,x,y,target?.key);return;}
+      if(!d){
+        const target=this.targetAt(x,y);
+        if(target)this.handlers.hover(target.id,x,y);else this.handlers.leave(null);
+        return;
+      }
       if(e.pointerId!==d.pointer)return;
       d.endX=x;d.endY=y;
       if(d.pan)this.center=[d.c[0]-(x-d.x)/this.scale,d.c[1]-(y-d.y)/this.scale];
@@ -190,7 +195,7 @@
           ctx.beginPath();ctx.arc(x,y,rad+4,0,2*Math.PI);ctx.stroke();
         }
         const special=r.materialMarks.some(k=>['d_betharian_deposit','minor_artifacts','reward'].includes(k));
-        visible.push({r,x,y,priority:(this.pick===s.id?1000:0)+(special?160:0)+(r.relic||r.ruins.length||r.events.length||r.homes.length?80:0)+(r.worlds[0]?.size||0)});
+        visible.push({r,x,y,priority:(this.pick===s.id?1000:0)+(special?160:0)+(r.relicWorlds.length||r.ruins.length||r.events.length||r.homes.length?80:0)+(r.worlds[0]?.size||0)});
       }
       visible.sort((a,b)=>b.priority-a.priority);
       const occupied=new Set();
@@ -265,7 +270,7 @@
           }
         }
         const marks=[];
-        if(opts.relic && r.relic)marks.push(['◇','#dba5f0']);
+        if(opts.relic && r.relicWorlds.length)marks.push(['◇','#dba5f0']);
         if(opts.ruins && r.ruins.length)marks.push(['▣','#ef9b7c']);
         if(opts.events && (r.events.length || r.sites.length))marks.push(['✦','#ffd094']);
         if(opts.homes && r.homes.length)marks.push(['★','#bfabff']);

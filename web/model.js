@@ -52,7 +52,7 @@
       else if(['fallen_empire','awakened_fallen_empire'].includes(g.countryTypes?.[owner])) territory='fallen';
       const row={s,owner,territory,worlds:[],resources:{},surface:{},surfaceYield:{},features:{},locations:[],
         conditional:0,unknown:new Set(),orbitalRare:new Set(),prizes:new Map(),
-        relic:false,ruins:[],events:[],homes:[],clues:[],sites:[]};
+        relicWorlds:[],ruins:[],structures:[],events:[],homes:[],clues:[],sites:[],anomalies:[]};
       const seen=new Set();
       function event(key,group) {
         const note=highlights[key];
@@ -64,7 +64,7 @@
       for(const p of s.planets) {
         const visible=full || p.survey;
         if(visible) {
-          if(p.type==='pc_relic') row.relic=true;
+          if(p.type==='pc_relic') row.relicWorlds.push(p);
           const toxic=p.type==='pc_toxic';
           const matches=toxic ? opt.toxic==='all' || (opt.toxic==='candidate' && p.candidate) :
             opt.scope==='bodies' || colonizable.has(p.type) || p.candidate;
@@ -91,14 +91,21 @@
           }
           if(Object.keys(features).length || Object.keys(orbital).length)row.locations.push({planet:p,features,orbital});
         }
-        if(p.anomaly && (full || p.anomalyKnown)) event(p.anomaly,'events');
+        if(p.anomaly && (full || p.anomalyKnown)){
+          row.anomalies.push({key:p.anomaly,planet:p});
+          event(p.anomaly,'events');
+        }
       }
       if(full) {
         event(s.init,'events');
         for(const f of s.flags) event(f,/^precursor_(?:[1-5]|baol_1|zroni_1|inetian|adakkaria)$/.test(f)?'clues':'events');
       }
       for(const site of s.sites) if(full || site.known) {row.sites.push(site);event(site.key,'events');}
-      if(full || s.owner===g.player) row.ruins=s.megas.filter(k=>/ruin/.test(k));
+      if(full || s.owner===g.player){
+        for(const k of s.megas){
+          if(/ruin/.test(k))row.ruins.push(k);else row.structures.push(k);
+        }
+      }
       row.materialMarks=materialMarks(row,cat,opt);
       row.worlds.sort((a,b)=>b.size-a.size || Number(a.id)-Number(b.id));
       systems.set(s.id,row);

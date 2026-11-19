@@ -111,8 +111,25 @@ test('player records hide unsurveyed yields and undiscovered sites and other sys
   const r=inspect({view:'player'});
   assert.equal(r.size,1);assert.equal(r.get('3').events.length,0);assert.equal(r.get('3').sites.length,0);
   assert.equal(stats(r).resources.minerals,3);
-  const full=inspect();assert.equal(full.get('4').relic,true);
+  const full=inspect();assert.deepEqual(full.get('4').relicWorlds.map(p=>p.id),['11']);
   assert.equal(full.get('3').ruins[0],'think_tank_ruined');assert.ok(full.get('4').events[0].note.en.includes('Rubricator'));
+});
+test('a system keeps its known dig sites, anomalies and resource locations independently of planet and overlay filters',async()=>{
+  const save=source.replace('planet_size=15 planet_class="pc_continental"', 'anomaly=ALPHA_CENTAURI_CAT planet_size=15 planet_class="pc_continental"')
+    .replace('visible_to={1}', 'visible_to={0} completed={{country=1 date="2201.03.01"} {country=0 date="2202.04.03"}}')
+    .replace('starting_system=3', 'events={anomalies={8}} starting_system=3');
+  const g=await GalaxyReader.readFile(new Blob([save]));
+  const opt={...opts,view:'player',min:30,rare:false,events:false,resource:'minor_artifacts'};
+  const row=GalaxyModel.inspect(g,catalog,opt,HIGHLIGHTS).get('3');
+  assert.deepEqual(row.worlds,[]);
+  assert.deepEqual(row.locations.map(loc=>loc.planet.id),['8']);
+  assert.equal(row.surface.rare_crystals,1);
+  assert.equal(row.sites[0].planetId,'8');
+  assert.equal(row.sites[0].playerCompletedOn,'2202.04.03');
+  assert.deepEqual(row.anomalies.map(a=>[a.planet.id,a.key]),[['8','ALPHA_CENTAURI_CAT']]);
+  const hidden=source.replace('planet_size=15 planet_class="pc_toxic"', 'anomaly=HIDDEN_CAT planet_size=15 planet_class="pc_toxic"');
+  const unseen=await GalaxyReader.readFile(new Blob([hidden]));
+  assert.deepEqual(GalaxyModel.inspect(unseen,catalog,opt,HIGHLIGHTS).get('3').anomalies,[]);
 });
 test('Arc Furnace yield follows the installed system overclock',async()=>{
   const withFurnace=source.replace('deposits={1 2}','deposits={1 2 12}')

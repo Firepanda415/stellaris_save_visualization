@@ -33,7 +33,7 @@
 <label><input id="ruins" type="checkbox" checked><span class="mark ruin">▣</span><span data-i="ruins">巨构废墟</span></label></section>
 </aside>
 <section class="map-panel"><div class="map-bar"><div><strong id="map-name"></strong><span id="map-meta" class="meta"></span></div><div class="buttons"><button id="zoom-out" aria-label="Zoom out">−</button><button id="zoom-in" aria-label="Zoom in">＋</button><button id="fit" data-i="fit">全图</button></div></div>
-<div id="plot"><canvas id="map" tabindex="0" aria-label="Galaxy map"></canvas><div id="tooltip" hidden></div><div class="scale" id="zoom-level"></div></div>
+<div id="plot"><canvas id="map" tabindex="0" aria-label="Galaxy map"></canvas><div id="tooltip" role="region" tabindex="0" aria-label="星系详情" hidden></div><div class="scale" id="zoom-level"></div></div>
 <div class="map-footer"><div class="buttons modes"><button id="select-mode" aria-pressed="true" data-i="select">框选</button><button id="pan-mode" aria-pressed="false" data-i="pan">平移</button></div><span data-i="gesture">拖动框选 · Ctrl 点击或框选增减 · 滚轮缩放</span></div>
 <div class="inspect"><label for="lookup" data-i="inspect">查看星系</label><input list="systems" id="lookup" autocomplete="off"><datalist id="systems"></datalist><button id="toggle-one" data-i="toggle">加选 / 取消</button></div>
 <div id="system-detail" class="system-detail" aria-live="polite"></div>

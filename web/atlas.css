@@ -307,17 +307,26 @@ canvas {
 
 #tooltip {
   position:absolute;
-  pointer-events:none;
   z-index:1;
   background:#19292df5;
   border:1px solid #65827e;
   border-radius:6px;
   padding:9px 12px;
-  max-width:min(360px,90%);
+  max-width:calc(100% - 8px);
+  max-height:calc(100% - 8px);
+  overflow:auto;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
   font-size:.82rem;
   box-shadow:0 4px 22px #060b0e80;
-  white-space:pre-line;
+  overflow-wrap:anywhere;
 }
+
+:is(#tooltip,.system-detail) .sheet-title {font-weight:650;color:var(--ink);}
+:is(#tooltip,.system-detail) section {margin-top:.55rem;}
+:is(#tooltip,.system-detail) h4 {color:var(--accent);font-size:.82rem;margin:0 0 .15rem;}
+:is(#tooltip,.system-detail) .sheet-item {color:var(--ink);margin:.15rem 0;}
+:is(#tooltip,.system-detail) .sheet-sub {color:var(--muted);white-space:pre-line;padding-inline-start:.6rem;}
 
 .inspect {
   border-top:1px solid var(--line);

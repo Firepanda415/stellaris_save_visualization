@@ -143,8 +143,10 @@
     for (const [, [s]] of entries(one(one(raw,'archaeological_sites'),'sites'))) {
       const pos = one(s,'location');
       if (one(pos,'type')!=='2') continue;
-      planetSystem.get(one(pos,'id'))?.sites.push({key:one(s,'type'),known:list(s,'visible_to').includes(player),
-        completed:!!s.completed});
+      const planetId=one(pos,'id');
+      const record=list(s,'completed').find(v=>one(v,'country')===player);
+      planetSystem.get(planetId)?.sites.push({key:one(s,'type'),planetId,known:list(s,'visible_to').includes(player),
+        completed:!!s.completed,playerCompletedOn:one(record,'date')});
     }
     if (!systemMap.size || !home) throw Error('No player galaxy in text save');
     return {version:one(raw,'version'),date:one(raw,'date'),player,start:one(home,'starting_system'),

@@ -1,7 +1,7 @@
 """Build the browser's bilingual map catalog from an installed copy of Stellaris."""
 
 import argparse
-from collections import Counter
+from collections import Counter, defaultdict
 import json
 from pathlib import Path
 import re
@@ -59,6 +59,60 @@ def definitions(common, folder):
 
 def scalar(entries, key):
     return next((value for name, value in entries if name == key and isinstance(value, str)), None)
+
+
+def script_leaves(entries, path=()):
+    for key, value in entries:
+        current = (*path, key)
+        if isinstance(value, list):
+            yield from script_leaves(value, current)
+        else:
+            yield current, value
+
+
+def galaxy_templates(game):
+    names = {}
+    sites = defaultdict(set)
+    planet_targets = defaultdict(set)
+    for source in sorted((game / 'common/solar_system_initializers').glob('*.txt')):
+        if source.name == 'example.txt':
+            continue
+        for system, body in read_script(source):
+            if not isinstance(body, list):
+                continue
+            name = scalar(body, 'name')
+            for path, value in script_leaves(body):
+                if path == ('init_effect', 'set_name'):
+                    name = value
+                if path[-1] == 'create_archaeological_site':
+                    sites[system].add(value)
+                if (len(path) >= 3 and path[-3] in {'planet', 'moon'}
+                        and path[-2:] == ('init_effect', 'save_global_event_target_as')):
+                    planet_targets[f'event_target:{value}'].add(system)
+            if name and re.fullmatch(r'[\w.-]+', name):
+                names[system] = name
+
+    # Some survey and project events create a dig on a planet named by its initializer.
+    # Match placement on that exact target, including a surveyed 'from' bound by the trigger.
+    for source in sorted((game / 'events').glob('*.txt')):
+        if 'create_archaeological_site' not in source.read_text(encoding='utf-8-sig'):
+            continue
+        for _, event in read_script(source):
+            if not isinstance(event, list):
+                continue
+            from_target = None
+            placements = []
+            for path, value in script_leaves(event):
+                if path == ('trigger', 'from', 'is_same_value'):
+                    from_target = value
+                if (len(path) >= 3 and path[0] in {'immediate', 'option', 'after'}
+                        and path[-1] == 'create_archaeological_site' and 'tooltip' not in path):
+                    placements.append((path[-2], value))
+            for scope, site in placements:
+                owners = planet_targets.get(from_target if scope == 'from' else scope, ())
+                if len(owners) == 1:
+                    sites[next(iter(owners))].add(site)
+    return names, {system: sorted(values) for system, values in sorted(sites.items())}
 
 
 def positive_amount(value, variables):
@@ -222,7 +276,8 @@ def build(game):
                 branches = arc_furnace_branches(data, local_vars, resources)
                 if branches:
                     deposits[key]['branches'] = branches
-    keys = set(classes) | set(resources) | set(deposits)
+    system_names, scripted_sites = galaxy_templates(game)
+    keys = set(classes) | set(resources) | set(deposits) | set(system_names.values())
     # Include relic names in the map's curated reward notes.
     highlights = Path(__file__).resolve().parents[1] / 'web' / 'highlights.js'
     keys.update(re.findall(r'\brelic:\s*"(r_\w+)"', highlights.read_text(encoding='utf-8')))
@@ -236,6 +291,9 @@ def build(game):
                  'NEW_COLONY_NAME_1', 'NEW_COLONY_NAME_2'))
     english = translations(game, 'english', keys)
     chinese = translations(game, 'simp_chinese', keys)
+    named_systems = {system: key for system, key in sorted(system_names.items())
+                     if key in english and key in chinese and english[key] and chinese[key]
+                     and not re.search(r'[$%\[\]<>]', english[key] + chinese[key])}
     names = {k: [english.get(k, chinese.get(k)), chinese.get(k, english.get(k))]
              for k in sorted(english.keys() | chinese.keys())}
     version = json.loads((game / 'launcher-settings.json').read_text(encoding='utf-8-sig'))['version']
@@ -243,6 +301,8 @@ def build(game):
         'version': version, 'names': names,
         'colonizable': sorted(k for k, data in classes.items() if scalar(data, 'colonizable') == 'yes'),
         'strategic': strategic, 'deposits': dict(sorted(deposits.items())),
+        'namedSystems': named_systems,
+        'scriptedSites': {system: sites for system, sites in scripted_sites.items() if system in named_systems},
     }
 
 

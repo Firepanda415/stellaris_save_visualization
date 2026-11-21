@@ -7,6 +7,7 @@
     toxic:'Toxic worlds',allToxic:'Include all',candidate:'Terraforming candidates only',off:'Hide and exclude',min:'Minimum size',
     layers:'Overlays',territory:'Empire territory',rare:'Orbital resources & artifacts',features:'Planetary resources & features',rewards:'Relic reward locations',
     markFilter:'Filter resource and feature markers',legend:'More map symbols',relic:'Relic worlds',events:'Events & dig sites',homes:'Precursor home systems',
+    named:'Fixed-name systems',findNamed:'Find a system or dig site',namedAll:'Mark all listed systems',
     playerTerr:'Player',npcTerr:'Regular NPC',fallenTerr:'Fallen Empire',unknownTerr:'Unknown owner',
     countTerritory:'Territory to count',freeTerr:'Unclaimed systems always count.',
     clues:'Precursor clue regions',ruins:'Ruined megastructures',fit:'Fit',select:'Select',pan:'Pan',
@@ -20,7 +21,9 @@
   const labels=[...document.querySelectorAll('[data-i]')].map(el=>[el,el.textContent,en[el.dataset.i]]);
   const model=globalThis.GalaxyModel;
   let g,cat,rows=new Map(),lang='zh',picked=null,selected=new Set(),loading=0,worker=null,loadingFile=false;
-  const map=new GalaxyMap($('map'),{select:choose,hover:showHover,leave:leaveHover,zoom:v=>{$('zoom-level').textContent=Math.round(v*100)+'%';}});
+  const namedIds=new Set();
+  const map=new GalaxyMap($('map'),{select:choose,hover:showHover,leave:leaveHover,fixedLabel:r=>local(r.fixedName),
+    zoom:v=>{$('zoom-level').textContent=Math.round(v*100)+'%';}});
   const t=(zh,english)=>lang==='en'?english:zh;
   const local=key=>model.label(key,cat,lang);
   const nf=n=>n.toLocaleString(lang==='zh'?'zh-Hans':'en',{maximumFractionDigits:3});
@@ -48,7 +51,7 @@
   function options(){
     const checked=attribute=>new Set([...document.querySelectorAll('[data-'+attribute+']:checked')].map(el=>el.dataset[attribute]));
     return {min:Math.max(0,Number($('min').value)||0),toxic:$('toxic').value,scope:$('scope').value,view:$('view').value,
-      resource:$('resource').value,shaded:checked('shade'),included:checked('count').add('unclaimed'),lang,
+      resource:$('resource').value,shaded:checked('shade'),included:checked('count').add('unclaimed'),namedIds,lang,
       ...Object.fromEntries(['sizes','territory','rare','features','rewards','relic','events','homes','ruins','clues'].map(k=>[k,$(k).checked]))};
   }
   function featureName(key){
@@ -107,6 +110,49 @@
     return kind[r.territory]+' · '+n;
   }
   function title(r){return local(r.s.name)+'  #'+r.s.id;}
+  function updateNamedChoices(){
+    const inputs=$('named-list').querySelectorAll('input');
+    const search=$('named-search').value.trim().toLocaleLowerCase();
+    let selectedCount=0,listed=0,marked=0;
+    for(const input of inputs){
+      const entry=input.closest('.named-entry');
+      entry.hidden=!!search && !entry.dataset.search.includes(search);
+      input.checked=namedIds.has(input.value);
+      if(input.checked)selectedCount++;
+      if(!entry.hidden){listed++;if(input.checked)marked++;}
+    }
+    $('named-all').checked=listed>0 && listed===marked;
+    $('named-all').indeterminate=marked>0 && marked<listed;
+    $('named-all').disabled=listed===0;
+    $('named-count').textContent=selectedCount+' / '+inputs.length;
+  }
+  function namedList(){
+    const systems=[...rows.values()].filter(r=>r.fixedName);
+    systems.sort((a,b)=>Number(!!b.fixedSites.length)-Number(!!a.fixedSites.length) ||
+      local(a.fixedName).localeCompare(local(b.fixedName),lang) || Number(a.s.id)-Number(b.s.id));
+    const frag=document.createDocumentFragment();
+    for(const r of systems){
+      const entry=document.createElement('div'),toggle=document.createElement('input'),jump=document.createElement('button');
+      entry.className='named-entry';
+      const canonical=local(r.fixedName),current=local(r.s.name),name=current===canonical?canonical:canonical+' ('+current+')';
+      toggle.type='checkbox';toggle.value=r.s.id;toggle.setAttribute('aria-label',t('标记 ','Mark ')+name);
+      toggle.onchange=()=>{if(toggle.checked)namedIds.add(r.s.id);else namedIds.delete(r.s.id);updateNamedChoices();map.queue();};
+      jump.type='button';jump.textContent=name;jump.title=t('定位星系','Locate system')+' #'+r.s.id;
+      jump.onclick=()=>{picked=r.s.id;map.focusSystem(picked);details();};
+      entry.append(toggle,jump);
+      if(r.fixedSites.length){
+        const note=document.createElement('small');
+        note.textContent=r.fixedSites.map(({key,site})=>local(key)+(site?'':t('（模板关联）',' (template)'))).join(' · ');
+        entry.append(note);
+      }
+      const names=[r.fixedName,r.s.name,...r.fixedSites.map(v=>v.key),...r.sites.map(v=>v.key)];
+      entry.dataset.search=['#'+r.s.id,...names.flatMap(key=>['en','zh'].map(l=>model.label(key,cat,l)))].join(' ').toLocaleLowerCase();
+      frag.append(entry);
+    }
+    $('named-list').replaceChildren(frag);
+    $('named-systems').hidden=!systems.length;
+    updateNamedChoices();
+  }
   function planetName(p){return local(p.name) || '#'+p.id;}
   function featureText(key,count,alwaysCount=false){
     const def=cat.deposits[key];
@@ -119,7 +165,12 @@
   function systemSheet(r){
     const sheet=document.createDocumentFragment();
     const header=document.createElement('div');header.className='sheet-title';
-    header.textContent=title(r)+' · '+ownerText(r);sheet.append(header);
+    header.textContent=title(r)+' · '+ownerText(r);
+    if(r.fixedName){
+      const name=local(r.fixedName);
+      header.textContent+=' · '+t('固定名称星系','Fixed-name system')+(name===local(r.s.name)?'':' ('+name+')');
+    }
+    sheet.append(header);
     function section(name){
       const block=document.createElement('section'),heading=document.createElement('h4');
       heading.textContent=name;block.append(heading);return block;
@@ -129,6 +180,23 @@
       if(detail){const sub=document.createElement('div');sub.className='sheet-sub';sub.textContent=detail;line.append(sub);}
       if(!block.parentNode)sheet.append(block);
       block.append(line);
+    }
+    if(r.fixedName && r.fixedSites.length){
+      const preset=section(t('星系关联遗址','Dig sites tied to this system'));
+      for(const {key,site} of r.fixedSites){
+        const host=site && r.s.planets.find(p=>p.id===site.planetId);
+        const location=host && (map.options.view==='all' || host.survey)?' · '+planetName(host):'';
+        const description=[];
+        if(site?.playerCompletedOn)description.push(t('本国完成于 ','Completed by your empire on ')+site.playerCompletedOn);
+        if(!site)description.push(t('游戏模板关联此遗址，当前存档未记录遗址实体。','The system template can place this site. No site is recorded here in this save.'));
+        const note=HIGHLIGHTS[key];
+        if(note){
+          if(note.home)description.push(note.title[lang]);
+          if(note.relic)description.push(t('可能获得的遗珍 · ','Possible relic reward · ')+local(note.relic));
+          description.push(note[lang]);
+        }
+        item(preset,t('考古点 · ','Dig site · ')+local(key)+location,description.join('\n'));
+      }
     }
     const yieldsText=entries=>entries.map(([k,n])=>local(k)+' +'+nf(n)+t('/月','/mo')).join(' · ');
     const sitesText=entries=>entries.map(([k,n])=>featureName(k)+' ×'+nf(n)).join(t('、',', '));
@@ -168,6 +236,7 @@
     const landmarks=section(t('星系地点','System locations'));
     if(r.relicWorlds.length)item(landmarks,local('pc_relic')+' · '+r.relicWorlds.map(planetName).join(', '));
     for(const site of r.sites){
+      if(r.fixedSites.some(v=>v.site===site))continue;
       const host=r.s.planets.find(p=>p.id===site.planetId);
       const location=host && (map.options.view==='all' || host.survey)?' · '+planetName(host):'';
       item(landmarks,t('考古点 · ','Dig site · ')+local(site.key)+location,
@@ -181,8 +250,8 @@
       item(landmarks,heading+sitesText(Object.entries(counts)));
     }
 
-    const notes=[...r.homes,...r.events,...r.clues];
-    if(notes.length){
+    const notes=[...r.homes,...r.events,...r.clues].filter(({note})=>!r.fixedSites.some(v=>HIGHLIGHTS[v.key]===note));
+    if(notes.length || r.prizes.size){
       const events=section(t('事件记录','Event records'));
       for(const {key,note} of notes){
         const classic=/^(vultaumar|yuhtaan|fen_habbanis|irass|cybrex)_system$/.test(key);
@@ -315,6 +384,7 @@
     $('count-unknown').hidden=![...rows.values()].some(r=>r.territory==='unknown');
     if(geometryChanged || !rows.has(picked)) picked=rows.has(g.start)?g.start:(rows.keys().next().value ?? null);
     if(geometryChanged || $('systems').lang!==lang){
+      namedList();
       const frag=document.createDocumentFragment();
       for(const r of rows.values()){const o=document.createElement('option');o.value=title(r);frag.append(o);}
       $('systems').replaceChildren(frag);$('systems').lang=lang;
@@ -326,6 +396,7 @@
   }
   function install(galaxy){
     g=galaxy;
+    namedIds.clear();$('named-search').value='';
     selected=new Set(g.demo?g.systems.filter(s=>s.x>-45 && s.x<24 && s.y<0 && s.y>-82).map(s=>s.id):[]);
     render(true);
   }
@@ -360,6 +431,13 @@
     tabLanguage();install(globalThis.LOCAL_SNAPSHOT ?? exampleGalaxy());
     $('file').addEventListener('change',e=>{load(e.target.files[0]);e.target.value='';});
     $('language').onchange=e=>{lang=e.target.value;tabLanguage();render();};
+    $('named-search').oninput=updateNamedChoices;
+    $('named-all').onchange=e=>{
+      for(const input of $('named-list').querySelectorAll('.named-entry:not([hidden]) input')){
+        if(e.target.checked)namedIds.add(input.value);else namedIds.delete(input.value);
+      }
+      updateNamedChoices();map.queue();
+    };
     $('tooltip').onpointerenter=stopLeave;
     $('tooltip').onpointerleave=e=>leaveHover(e.relatedTarget);
     $('plot').onpointerleave=()=>showHover(null);

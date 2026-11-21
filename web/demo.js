@@ -26,6 +26,11 @@ function exampleGalaxy() {
       init:i%54===8?sites[Math.floor(i/54)%Math.max(1,sites.length)] || '':'',flags:i%20===5?['precursor_1']:[],
       planets,megas:i%64===11?['think_tank_ruined']:[],sites:[],lanes:[]});
   }
+  const polaris=systems[35];
+  polaris.name='NAME_Polaris';polaris.init='polaris_civilization';
+  Object.assign(polaris.planets[1],{name:{key:'PLANET_NAME_FORMAT',vars:[['PARENT',polaris.name],['NUMERAL','II']]},
+    type:'pc_ocean',size:23,candidate:false});
+  polaris.sites.push({key:'site_polaris_seed_vault',planetId:polaris.planets[1].id,known:polaris.known});
   for(const s of systems){
     const nearest=systems.filter(o=>o!==s).sort((a,b)=>Math.hypot(a.x-s.x,a.y-s.y)-Math.hypot(b.x-s.x,b.y-s.y)).slice(0,3);
     for(const o of nearest) if(!s.lanes.includes(o.id)){s.lanes.push(o.id);o.lanes.push(s.id);}

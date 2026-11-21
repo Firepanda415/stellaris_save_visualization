@@ -194,8 +194,13 @@
           ctx.strokeStyle=GalaxyModel.symbols[r.materialMarks[0]][2];ctx.lineWidth=1.7;
           ctx.beginPath();ctx.arc(x,y,rad+4,0,2*Math.PI);ctx.stroke();
         }
+        const named=r.fixedName && opts.namedIds.has(s.id);
+        if(named){
+          ctx.strokeStyle='#f5dd81';ctx.lineWidth=2;ctx.beginPath();
+          ctx.moveTo(x,y-9);ctx.lineTo(x+9,y);ctx.lineTo(x,y+9);ctx.lineTo(x-9,y);ctx.closePath();ctx.stroke();
+        }
         const special=r.materialMarks.some(k=>['d_betharian_deposit','minor_artifacts','reward'].includes(k));
-        visible.push({r,x,y,priority:(this.pick===s.id?1000:0)+(special?160:0)+(r.relicWorlds.length||r.ruins.length||r.events.length||r.homes.length?80:0)+(r.worlds[0]?.size||0)});
+        visible.push({r,x,y,named,priority:(this.pick===s.id?1000:0)+(named?300:0)+(special?160:0)+(r.relicWorlds.length||r.ruins.length||r.events.length||r.homes.length?80:0)+(r.worlds[0]?.size||0)});
       }
       visible.sort((a,b)=>b.priority-a.priority);
       const occupied=new Set();
@@ -213,17 +218,33 @@
         for(const key of cells)occupied.add(key);
         return true;
       }
+      function clearOfStars(left,cy,width){
+        const right=left+width;
+        for(let i=Math.floor((left-3)/24);i<=Math.floor((right+3)/24);i++)
+          for(let j=Math.floor((cy-9)/24);j<=Math.floor((cy+9)/24);j++)
+            if((starCells.get(i+','+j) ?? []).some(p=>p.x>=left-3 && p.x<=right+3 && Math.abs(p.y-cy)<=9))return false;
+        return true;
+      }
+      for(const {r,x,y,named} of visible){
+        if(!named)continue;
+        const name=this.handlers.fixedLabel(r),width=Math.ceil(ctx.measureText(name).width)+6;
+        const places=[[x+9,y-12],[x-width-9,y-12],[x+9,y+12],[x-width-9,y+12],[x-width/2,y-20],[x-width/2,y+20]]
+          .filter(([left,cy])=>left>=0 && left+width<=this.w && cy>=7 && cy<=this.h-7);
+        const pos=places.find(([left,cy])=>clearOfStars(left,cy,width) && space(left,cy,width)) ??
+          (opts.namedIds.size===1 && places.find(([left,cy])=>space(left,cy,width)));
+        if(!pos)continue;
+        const [left,cy]=pos;
+        ctx.fillStyle='#1b2423';ctx.fillRect(left,cy-7,width,14);
+        ctx.fillStyle='#f5dd81';ctx.fillText(name,left+3,cy);
+        this.markerHits.push({id:r.s.id,key:'fixed-name',left,right:left+width,top:cy-7,bottom:cy+7});
+      }
       const drawMaterials=(r,x,y)=>{
         if(!r.materialMarks.length)return;
         const place=(width,offsets)=>{
           for(const [dx,dy] of offsets){
             const left=x+dx,cy=y+dy,right=left+width;
             if(left<0 || right>this.w || cy<=6 || cy>=this.h-6)continue;
-            let blocked=false;
-            for(let i=Math.floor((left-3)/24);i<=Math.floor((right+3)/24) && !blocked;i++)
-              for(let j=Math.floor((cy-9)/24);j<=Math.floor((cy+9)/24) && !blocked;j++)
-                blocked=(starCells.get(i+','+j) ?? []).some(p=>p.x>=left-3 && p.x<=right+3 && Math.abs(p.y-cy)<=9);
-            if(!blocked && space(left,cy,width))return [left,cy];
+            if(clearOfStars(left,cy,width) && space(left,cy,width))return [left,cy];
           }
         };
         let badges=r.materialMarks;

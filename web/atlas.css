@@ -647,3 +647,13 @@ input[data-shade=fallen],input[data-count=fallen] {accent-color:var(--territory-
 #feature-counts details {padding:4px 0;border-bottom:1px solid var(--line);}
 #feature-counts ul {list-style:none;padding:0 0 0 9px;margin:4px 0;}
 #feature-counts button {border:0;background:transparent;text-align:left;padding:2px;font-size:.8rem;color:var(--accent);}
+#named-systems {margin:.55rem 0;}
+#named-systems summary {cursor:pointer;color:var(--ink);font-size:.88rem;}
+#named-count {color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.named-diamond {color:#f5dd81;}
+#named-search {min-width:0;width:100%;background:var(--inset);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:.32rem .5rem;}
+#named-list {max-height:19rem;overflow:auto;scrollbar-width:thin;}
+.named-entry {display:grid;grid-template-columns:16px minmax(0,1fr);align-items:center;gap:0 5px;margin:.25rem 0;}
+.named-entry button {background:transparent;border:0;text-align:left;padding:.25rem;color:var(--ink);line-height:1.25;overflow-wrap:anywhere;}
+.named-entry button:hover {color:#f5dd81;text-decoration:underline;}
+.named-entry small {grid-column:2;margin:0 0 .15rem .25rem;color:var(--muted);font-size:.76rem;}

@@ -52,7 +52,8 @@
       else if(['fallen_empire','awakened_fallen_empire'].includes(g.countryTypes?.[owner])) territory='fallen';
       const row={s,owner,territory,worlds:[],resources:{},surface:{},surfaceYield:{},features:{},locations:[],
         conditional:0,unknown:new Set(),orbitalRare:new Set(),prizes:new Map(),
-        relicWorlds:[],ruins:[],structures:[],events:[],homes:[],clues:[],sites:[],anomalies:[]};
+        relicWorlds:[],ruins:[],structures:[],events:[],homes:[],clues:[],sites:[],anomalies:[],
+        fixedName:null,fixedSites:[]};
       const seen=new Set();
       function event(key,group) {
         const note=highlights[key];
@@ -101,6 +102,19 @@
         for(const f of s.flags) event(f,/^precursor_(?:[1-5]|baol_1|zroni_1|inetian|adakkaria)$/.test(f)?'clues':'events');
       }
       for(const site of s.sites) if(full || site.known) {row.sites.push(site);event(site.key,'events');}
+      const canonical=cat.namedSystems?.[s.init];
+      if(typeof canonical==='string'){
+        const siteKeys=cat.scriptedSites?.[s.init] ?? [];
+        const actualName=typeof s.name==='string'?s.name:s.name?.key;
+        const nameKnown=actualName===canonical || cat.names[canonical]?.includes(actualName);
+        if(full || nameKnown || row.sites.some(site=>siteKeys.includes(site.key))){
+          row.fixedName=canonical;
+          for(const key of siteKeys){
+            const site=row.sites.find(v=>v.key===key);
+            if(full || site)row.fixedSites.push({key,site});
+          }
+        }
+      }
       if(full || s.owner===g.player){
         for(const k of s.megas){
           if(/ruin/.test(k))row.ruins.push(k);else row.structures.push(k);

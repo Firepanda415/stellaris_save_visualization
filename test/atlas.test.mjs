@@ -35,6 +35,25 @@ const inspect=opt=>GalaxyModel.inspect(galaxy,catalog,{...opts,...opt},HIGHLIGHT
 const stats=(r,foreign=false)=>GalaxyModel.summarize(new Set(['3','4','5']),r,
   new Set(foreign?['unclaimed','player','npc','fallen','unknown']:['unclaimed','player']));
 
+test('fixed names come from the system template and only known sites appear in player records',()=>{
+  const polaris={...galaxy.systems[0],init:'polaris_civilization',name:'NAME_Polaris'};
+  const key='site_polaris_seed_vault',site={key,known:false,planetId:'8'};
+  const inspectOne=(changes,view='all')=>GalaxyModel.inspect({...galaxy,systems:[{...polaris,sites:[site],...changes}]},catalog,{...opts,view},HIGHLIGHTS).get('3');
+  const full=inspectOne({});
+  assert.equal(full.fixedName,'NAME_Polaris');
+  assert.equal(catalog.names[full.fixedName][1],'勾陈一');
+  assert.deepEqual(full.fixedSites,[{key,site}]);
+  assert.deepEqual(inspectOne({sites:[]}).fixedSites,[{key,site:undefined}]);
+  assert.deepEqual(inspectOne({},'player').fixedSites,[]);
+  assert.equal(inspectOne({name:{key:'勾陈一',literal:true,vars:[]}},'player').fixedName,'NAME_Polaris');
+  assert.ok(inspectOne({sites:[{...site,known:true}]},'player').fixedSites[0].site);
+  assert.equal(inspectOne({init:'basic_init_01'}).fixedName,null);
+  assert.equal(inspectOne({init:'basic_init_01',name:{key:'勾陈一',literal:true,vars:[]}}).fixedName,null);
+  assert.equal(inspectOne({name:'Renamed'}).fixedName,'NAME_Polaris');
+  assert.equal(inspectOne({name:'Renamed'},'player').fixedName,null);
+  assert.deepEqual(inspectOne({sites:[site,{key:'site_command_center',known:true}]}).fixedSites,[{key,site}]);
+});
+
 test('sovereignty uses the primary station, including slot zero, independently of occupation',()=>{
   assert.deepEqual(galaxy.systems.map(s=>s.owner),['0','1',null]);
   assert.equal(galaxy.systems[0].planets[0].name,'a } literal');

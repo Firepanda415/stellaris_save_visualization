@@ -8,6 +8,8 @@ The resource key beside the map lets you highlight a single material or feature.
 
 Player records show charted systems, surveyed bodies and known dig sites. Foreign ownership requires system intel and diplomatic contact. The full-save view also shows hidden deposits, precursor regions, destinations and ruined megastructures. Hover over an event or dig site (✦) or a precursor home system (★) to see its name. Where a reward is known, the tooltip gives its conditions.
 
+Expand **Fixed-name systems** to find a system by its English or Chinese name or dig site. Check a system to mark its location with a gold diamond, or click its name to center the map. The list uses system templates found in the current save. For example, the Polaris template places the One Last Hope dig site. The full-save view identifies template-linked sites that have no current site record. Player records show a linked site once it is known.
+
 ## Run locally
 
 Serve `web/` with a static HTTP server, for example `python -m http.server 4174 --bind 127.0.0.1 --directory web`. Open `http://127.0.0.1:4174/` and choose a save. The browser reads the file locally.

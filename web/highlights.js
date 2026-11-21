@@ -113,6 +113,12 @@ const highlights = {
     en: "adSalivul is an intermediate adAkkaria destination. Complete the special project on the broken world to reveal the Institute of Exalted Benevolence and pursue the capital.",
     source: "events/precursor_events_cosmic_storms.txt (cstorms.2185)"
   },
+  site_adakkaria_the_patriotic_institute: {
+    title: { zh: "考古点 · 崇高仁善协会", en: "Dig site · Institute of Exalted Benevolence" },
+    zh: "发掘完成 15 天后，艾德苏尔星系出现。定居帝国获得下一级轨道居住站科技的 25% 研究进度。游牧帝国和已掌握全部三级科技的帝国获得工程学研究点数。",
+    en: "The adSul system appears 15 days after excavation. Settled empires gain 25% progress toward their next habitat technology. Nomadic empires and those with all three habitat technologies gain Engineering research instead.",
+    source: "events/precursor_events_cosmic_storms.txt (cstorms.2225, cstorms.2230)"
+  },
   adSul_system: {
     relic: "r_the_tempest_invocator",
     home: true,
@@ -120,6 +126,12 @@ const highlights = {
     zh: "在艾德苏尔首都完成庆典遗址发掘后，可以选择索取风暴召唤器。持有它使凝聚力产出提高 10%，舰船维护费降低 15%。",
     en: "After excavating the celebration site on the adSul capital, choose to claim the Tempest Invocator. It raises Unity output by 10% and cuts ship upkeep by 15%.",
     source: "events/precursor_events_cosmic_storms.txt (cstorms.2270, cstorms.2335, cstorms.2355), common/relics/relics.txt (r_the_tempest_invocator)"
+  },
+  paragon_legendary_leader_homeworld: {
+    title: { zh: "考古点 · 瓦格罗人废墟", en: "Dig site · Vagrosian Ruins" },
+    zh: "需要凯德斯驾驶科研船发掘。完成后可以让他继续担任科学家，或转任指挥官、行政官。三种选择均给予他 54,000 经验和“远祖流传”特质。",
+    en: "Keides must lead the science ship. After the dig, he can remain a Scientist or become a Commander or Official. Each choice grants him 54,000 experience and the Ancestral Inheritance trait.",
+    source: "common/archaeological_site_types/08_paragon_arc_sites.txt (paragon_legendary_leader_homeworld), events/paragon_events_3.txt (paragon.3156, paragon.3160)"
   },
   omnirelic_site: {
     relic: "r_omnicodex",
@@ -153,6 +165,48 @@ const highlights = {
     zh: "打开外星盒子可以改造物种。绿色药剂使宜居性下限提高 30 个百分点，红色使住房消耗降低 5%，蓝色使领袖寿命延长 10%。",
     en: "Opening the alien box can modify your species. Green raises the habitability floor by 30 percentage points, red cuts housing use by 5%, and blue extends leader lifespan by 10%.",
     source: "events/distant_stars_events_2.txt (distar.3057), common/traits/04_species_traits.txt (trait_bioadaptability, trait_social_pheromones, trait_limited_regeneration)"
+  },
+  site_tiyanki_graveyard: {
+    title: { zh: "考古点 · 缇扬奇乱坟岗", en: "Dig site · Tiyanki Grave Mound" },
+    zh: "核心完好时，可以研究它以获得社会学研究点数。已与策展人接洽的帝国也可以将它卖出，获得 5,000 能量币。若挖坏核心，社会学研究奖励会减少。",
+    en: "An intact core can be studied for Society research or sold for 5,000 Energy Credits if you have met the Curators. A damaged core yields a smaller Society research reward.",
+    source: "events/ancient_relics_arcsite_events_2.txt (ancrel.14500, ancrel.14510, ancrel.14520)"
+  },
+  site_lost_moments: {
+    title: { zh: "考古点 · 永不遗忘", en: "Dig site · Never Forget" },
+    zh: "完成发掘后，帝国人口幸福度永久提高 5 个百分点。",
+    en: "Completing the dig permanently raises empire-wide pop happiness by 5 percentage points.",
+    source: "events/federations_events_1.txt (fedev.9440), common/static_modifiers/11_static_modifiers_federations.txt (lost_moment_memento)"
+  },
+  site_ancient_robot_world: {
+    title: { zh: "考古点 · 远古机器人星球", en: "Dig site · Ancient Robot World" },
+    zh: "保留监视设施可直接获得一座完整的哨兵阵列。机械智能也可接管当地，将其变为机械星球。接管、迁走机器人或拆解设施等其他选择各有 50% 概率使终末危机从终局起始年份起就有机会触发。",
+    en: "Keeping the surveillance facility gives you a completed Sentry Array. A Machine Intelligence can instead claim a Machine World. Taking over the planet, relocating the robots or dismantling the facility each has a 50% chance to allow the crisis roll from the endgame start year.",
+    source: "events/ancient_relics_arcsite_events_2.txt (ancrel.12090, ancrel.12095), events/crisis_trigger_events.txt (crisis_trigger.1)"
+  },
+  site_polaris_seed_vault: {
+    title: { zh: "考古点 · 最后的希望", en: "Dig site · One Last Hope" },
+    zh: "种子与微生物样本各有 50% 概率。种子使帝国生物学研究速度永久提高 10%。微生物样本可推进殖民科技，机械智能则获得社会学研究点数。该结局还对应 Grand Archive 标本“勾陈一庇护所”。启用 Ancient Relics 时，两种结局都可获得 300、400 或 500 稀有文物。",
+    en: "Seeds and microbes each have a 50% chance. Seeds permanently increase Biology research speed by 10%. Microbes can advance a colonization technology, or award Society research to a Machine Intelligence. The microbe outcome also features the Vault of Polaris specimen with Grand Archive. With Ancient Relics, either outcome also grants 300, 400 or 500 Minor Artifacts.",
+    source: "events/ancient_relics_arcsite_events_2.txt (ancrel.13006, ancrel.13020, ancrel.13025), common/static_modifiers/10_static_modifiers_ancient_relics.txt (polaris_biology_modifier), common/scripted_effects/archaeology_event_effects.txt (medium_artifact_reward), common/specimens/specimens.txt (vault_of_polaris)"
+  },
+  larion_digsite: {
+    title: { zh: "考古点 · 信号", en: "Dig site · The Signal" },
+    zh: "非排外且非灭绝性的帝国可以唤醒拉里昂内斯。把它们安置在首都可永久提高当地舒适度、建筑建造速度和岗位食物产出，各 +10%。若拥有当地恒星基地，也可把星系交给它们，建立蜂巢附庸。",
+    en: "Empires that are neither xenophobic nor genocidal can awaken the Larionessi. Giving them a home on your capital permanently adds 10% to local amenities, building construction speed and food from jobs. If you own the system’s starbase, you can instead grant them the system as a hive vassal.",
+    source: "events/unique_system_events.txt (unique.10, unique.15, unique.20), common/static_modifiers/16_static_modifiers_overlord.txt (larionessi_planet_modifier)"
+  },
+  zevox_digsite: {
+    title: { zh: "考古点 · 坠毁的飞船", en: "Dig site · The Crashed Ship" },
+    zh: "可直接领取社会学研究点数。除铁心灭绝者外，机械智能也可接受抟土之塑师的考验。通过考验会生成盖亚星球。失败时，部分人口会脱离集体，在那里建立独立帝国。",
+    en: "You can take Society research. A Machine Intelligence other than a Determined Exterminator can instead accept the Animator of Clay’s test. Success creates a Gaia World. Failure gives the Gaia World to a new independent empire and can cost you pops.",
+    source: "events/unique_system_events.txt (unique.65, unique.70, unique.80, unique.85, unique.90)"
+  },
+  site_the_chosen_backstory: {
+    title: { zh: "考古点 · 废弃观测站", en: "Dig site · Abandoned Observation Outpost" },
+    zh: "非灭绝性帝国可选择“立起护盾”项目，完成后凝聚力产出提高 10%，观测站产出提高 50%。若目标星球已归自己所有或尚未殖民，结局改为舰船武器伤害 +5% 和军国主义思潮吸引力 +15%，格式塔帝国则获得舰船武器伤害 +10%。",
+    en: "Non-genocidal empires can choose the Erect the Shield project. Completing it grants +10% Unity output and +50% observation post output. If you own the target world or it is uncolonized, the ending instead grants +5% ship weapon damage and +15% Militarist ethics attraction. Gestalts receive +10% ship weapon damage.",
+    source: "events/arcsite_events.txt (arcsite.3015, arcsite.3020), common/special_projects/00_projects_first_contact_dlc.txt (SHIELD_PRIMITIVE_PLANET_PROJECT), common/static_modifiers/18_static_modifiers_first_contact_dlc.txt (bane_of_the_prophetess, charynoi_redemption)"
   },
   last_thought_site: {
     title: { zh: "考古点 · 最后思绪", en: "Dig site · The Last Thought" },

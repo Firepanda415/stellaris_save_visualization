@@ -1,5 +1,17 @@
 (() => {
   'use strict';
+  function catalogForSave(catalog, version) {
+    if (!/\bv?4\.5\.4\b/.test(version)) return catalog;
+    const names = {...catalog.names};
+    for (const suffix of ['', 'I', 'II', 'III', 'IV']) {
+      const key = 'NAME_Stewarts_Resolve' + (suffix ? '_' + suffix : '');
+      if (names[key]) names[key] = [names[key][0], '斯图尔特之志' + (suffix ? ' ' + suffix : '')];
+    }
+    for (const key of ['sc_crisis_quaternary_1','sc_quaternary_1']) {
+      if (names[key]) names[key] = [names[key][0], '四合星'];
+    }
+    return {...catalog, names};
+  }
   function label(name,cat,lang) {
     if (!name) return '';
     if (typeof name==='object') {
@@ -149,5 +161,5 @@
     }
     return totals;
   }
-  globalThis.GalaxyModel={inspect,summarize,label,symbols,matchesFeature};
+  globalThis.GalaxyModel={inspect,summarize,label,symbols,matchesFeature,catalogForSave};
 })();

@@ -1,5 +1,5 @@
 // Illustrative data for trying the map before choosing a local save.
-function exampleGalaxy() {
+function exampleGalaxy(version) {
   const systems=[];
   let seed=7981;
   function random() {seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;}
@@ -35,6 +35,6 @@ function exampleGalaxy() {
     const nearest=systems.filter(o=>o!==s).sort((a,b)=>Math.hypot(a.x-s.x,a.y-s.y)-Math.hypot(b.x-s.x,b.y-s.y)).slice(0,3);
     for(const o of nearest) if(!s.lanes.includes(o.id)){s.lanes.push(o.id);o.lanes.push(s.id);}
   }
-  return {demo:true,date:'2200.01.01',version:'4.5',player:'0',start:'1',countries:{0:'Lyra',1:'Vela',2:'Carina'},
+  return {demo:true,date:'2200.01.01',version,player:'0',start:'1',countries:{0:'Lyra',1:'Vela',2:'Carina'},
     countryTypes:{0:'default',1:'default',2:'fallen_empire'},systems};
 }

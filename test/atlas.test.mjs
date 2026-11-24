@@ -9,7 +9,7 @@ import '../web/highlights.js';
 const catalog=JSON.parse(await readFile(new URL('../web/catalog.json',import.meta.url),'utf8'));
 const source=String.raw`version="test" date="2200.01.01" player={ { country=0 } }
 galactic_object={
-  3={name={key="Home"} coordinate={x=5 y=-2} planet=8 planet=9 planet=10 hyperlane={{to=4}} starbases={0 2} }
+  3={name={key="Home"} coordinate={x=5 y=-2} planet=8 planet=9 planet=10 hyperlane={{to=4} {to=4}} starbases={0 2} }
   4={name={key="Border"} coordinate={x=6 y=2} planet=11 hyperlane={{to=3}} starbases={2} initializer="rubricator_system"}
   5={name={key="No outpost"} coordinate={x=9 y=3} starbases={4294967295 2}}
 }
@@ -34,6 +34,31 @@ const opts={scope:'colony',toxic:'all',min:15,view:'all'};
 const inspect=opt=>GalaxyModel.inspect(galaxy,catalog,{...opts,...opt},HIGHLIGHTS);
 const stats=(r,foreign=false)=>GalaxyModel.summarize(new Set(['3','4','5']),r,
   new Set(foreign?['unclaimed','player','npc','fallen','unknown']:['unclaimed','player']));
+
+test('4.5.4 player records recognize the original Chinese name of Stewart’s Resolve',()=>{
+  const old=GalaxyModel.catalogForSave(catalog,'Cygnus v4.5.4');
+  const current=GalaxyModel.catalogForSave(catalog,'Corona Borealis v4.6.0');
+  const system={...galaxy.systems[0],init:'stewarts_resolve_system',name:{key:'斯图尔特之志',literal:true}};
+  assert.equal(GalaxyModel.inspect({...galaxy,systems:[system]},old,{...opts,view:'player'},HIGHLIGHTS).get('3').fixedName,'NAME_Stewarts_Resolve');
+  assert.equal(GalaxyModel.label('NAME_Stewarts_Resolve_III',old,'zh'),'斯图尔特之志 III');
+  assert.equal(GalaxyModel.label('NAME_Stewarts_Resolve_III',current,'zh'),'斯图尔特的决心 III');
+  assert.equal(current,catalog);
+});
+
+test('Lost Makers uses the player’s precursor choice and restoration flag independently of dig site visibility',async()=>{
+  const save=source.replace('starting_system=3','government={origin=origin_lost_makers} flags={lost_makers_precursor_baol_1_selected=0} starting_system=3')
+    .replace('1={name={key="Foreign"}','1={flags={origin_lost_makers_connection_restored=100 lost_makers_precursor_5_selected=1} name={key="Foreign"}')
+    .replace('type=omnirelic_site','type=lost_makers_precursor_site');
+  const read=text=>GalaxyReader.readFile(new Blob([text]));
+  const g=await read(save);
+  assert.deepEqual(g.lostMakers,{precursor:'precursor_baol_1',restored:false});
+  assert.equal((await read(save.replace('selected=0','selected=0 origin_lost_makers_connection_restored=100'))).lostMakers.restored,true);
+  assert.equal(galaxy.lostMakers,null);
+  const row=view=>GalaxyModel.inspect(g,catalog,{...opts,view},HIGHLIGHTS).get('3');
+  assert.deepEqual(row('player').events,[]);
+  assert.equal(row('all').events[0].note.title.en,'Dig site · Subterranean Complex');
+  assert.equal(row('all').prizes.size,0);
+});
 
 test('fixed names come from the system template and only known sites appear in player records',()=>{
   const polaris={...galaxy.systems[0],init:'polaris_civilization',name:'NAME_Polaris'};

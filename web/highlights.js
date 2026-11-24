@@ -127,6 +127,12 @@ const highlights = {
     en: "After excavating the celebration site on the adSul capital, choose to claim the Tempest Invocator. It raises Unity output by 10% and cuts ship upkeep by 15%.",
     source: "events/precursor_events_cosmic_storms.txt (cstorms.2270, cstorms.2335, cstorms.2355), common/relics/relics.txt (r_the_tempest_invocator)"
   },
+  lost_makers_precursor_site: {
+    title: { zh: "考古点 · 地下综合设施", en: "Dig site · Subterranean Complex" },
+    zh: "失落造主起源的帝国须先完成首都星系的这处发掘，才能追查先驱者。完成三阶段发掘后，可选择一项功能替换物种的冗余模块。若目标星系相距至少 6 跳，还会生成连接两地的虫洞。",
+    en: "Empires with the Lost Makers origin must finish this dig in their capital system to pursue a precursor. After three stages, choose a function to replace the species’ Redundant Module. If the target system is at least six jumps away, a wormhole links the two systems.",
+    source: "common/archaeological_site_types/15_forceofwill_arc_sites.txt (lost_makers_precursor_site), events/origin_events_forceofwill.txt (forceofwill.3010, forceofwill.3030, forceofwill.3035, forceofwill.3040)"
+  },
   paragon_legendary_leader_homeworld: {
     title: { zh: "考古点 · 瓦格罗人废墟", en: "Dig site · Vagrosian Ruins" },
     zh: "需要凯德斯驾驶科研船发掘。完成后可以让他继续担任科学家，或转任指挥官、行政官。三种选择均给予他 54,000 经验和“远祖流传”特质。",

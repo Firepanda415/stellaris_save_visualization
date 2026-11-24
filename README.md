@@ -16,5 +16,5 @@ Serve `web/` with a static HTTP server, for example `python -m http.server 4174 
 
 With Node.js 22, run `npm test` or build a single offline page with `node scripts/offline.mjs local/atlas.html`. An optional final argument embeds a map from a local save. That HTML contains the campaign data and can reopen another save.
 
-The English and Simplified Chinese catalog uses Stellaris 4.5.4 game definitions. To rebuild it from an installation, run `python scripts/build_catalog.py "path/to/Stellaris"` with Python 3.12. The map reads the objects present in each save. Unmapped deposit keys appear in the selection summary.
+The English and Simplified Chinese catalog uses Stellaris 4.6.0 game definitions. Saves from 4.5.4 use that version’s Chinese names for Stewart’s Resolve and its planets. To rebuild the catalog from an installation, run `python scripts/build_catalog.py "path/to/Stellaris"` with Python 3.12. The map reads the objects present in each save. Unmapped deposit keys appear in the selection summary.
 

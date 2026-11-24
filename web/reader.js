@@ -3,8 +3,12 @@
   'use strict';
   const all = true;
   const table = fields => ({'*': fields});
+  const lostMakersChoices = ['1','2','3','4','5','baol_1','zroni_1','inetian','adakkaria']
+    .map(id => 'precursor_' + id);
   const country = {
     name: all, type: all, terra_incognita: {systems: all}, surveyed_deposit_holders: all,
+    government: {origin: all}, flags: {origin_lost_makers_connection_restored: all,
+      ...Object.fromEntries(lostMakersChoices.map(key => ['lost_makers_' + key + '_selected', all]))},
     intel_level: all, hyperlane_systems: all, starting_system: all,
     fleets_manager: {owned_fleets: all}, events: {anomalies: all}, relations_manager: {relation: {country: all, contact: all}}
   };
@@ -114,7 +118,7 @@
       const ownerKnown=owner===player || (visited.has(id) && intelLevel>=3 && (owner===null || contacts.has(owner)));
       const system = {id,x,y,name:name(one(g,'name')) || '#'+id,owner,ownerKnown,known:visited.has(id),intel:intelLevel,
         knownLanes:laneIntel.has(id),init:one(g,'initializer') || '',flags:Object.keys(one(g,'flags') ?? {}),
-        lanes:list(g,'hyperlane').map(h=>one(h,'to')).filter(valid),planets:[],megas:[],arcModes:[],sites:[]};
+        lanes:[...new Set(list(g,'hyperlane').map(h=>one(h,'to')).filter(valid))],planets:[],megas:[],arcModes:[],sites:[]};
       for (const pid of g.planet ?? []) {
         const p = one(planets,pid);
         if (!p || typeof p !== 'object') continue;
@@ -149,7 +153,12 @@
         completed:!!s.completed,playerCompletedOn:one(record,'date')});
     }
     if (!systemMap.size || !home) throw Error('No player galaxy in text save');
-    return {version:one(raw,'version'),date:one(raw,'date'),player,start:one(home,'starting_system'),
+    const flags = one(home,'flags') ?? {};
+    const lostMakers = one(one(home,'government'),'origin') === 'origin_lost_makers' ? {
+      precursor: lostMakersChoices.find(key => Object.hasOwn(flags,'lost_makers_' + key + '_selected')),
+      restored: Object.hasOwn(flags,'origin_lost_makers_connection_restored')
+    } : null;
+    return {version:one(raw,'version'),date:one(raw,'date'),player,start:one(home,'starting_system'),lostMakers,
       countries:nations,countryTypes,systems:[...systemMap.values()]};
   }
   async function readFile(file) {

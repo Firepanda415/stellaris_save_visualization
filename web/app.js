@@ -20,7 +20,7 @@
   };
   const labels=[...document.querySelectorAll('[data-i]')].map(el=>[el,el.textContent,en[el.dataset.i]]);
   const model=globalThis.GalaxyModel;
-  let g,cat,rows=new Map(),lang='zh',picked=null,selected=new Set(),loading=0,worker=null,loadingFile=false;
+  let g,cat,baseCatalog,rows=new Map(),lang='zh',picked=null,selected=new Set(),loading=0,worker=null,loadingFile=false;
   const namedIds=new Set();
   const map=new GalaxyMap($('map'),{select:choose,hover:showHover,leave:leaveHover,fixedLabel:r=>local(r.fixedName),
     zoom:v=>{$('zoom-level').textContent=Math.round(v*100)+'%';}});
@@ -258,7 +258,15 @@
         const description=[];
         if(note.relic)description.push(t('可能获得的遗珍 · ','Possible relic reward · ')+local(note.relic));
         if(classic)description.push(t('条件 · 本国正在追踪该先驱者。','Requires the matching precursor chain.'));
-        description.push(note[lang]);item(events,note.title[lang],description.join('\n'));
+        const origin=g.lostMakers;
+        const originClue=origin && r.clues.some(clue=>clue.key===key);
+        if(originClue && origin.precursor && origin.precursor!==key){
+          description.push(t('失落造主起源已为本国选定另一支先驱者。','The Lost Makers origin assigned a different precursor to your empire.'));
+        }else{
+          if(originClue && !origin.restored)description.push(t('须先完成首都星系的“地下综合设施”发掘。','First finish excavating the Subterranean Complex in your capital system.'));
+          description.push(note[lang]);
+        }
+        item(events,note.title[lang],description.join('\n'));
       }
       if(r.prizes.size)item(events,t('遗珍领取状态未知。','Relic claim status unknown.'));
     }
@@ -396,6 +404,7 @@
   }
   function install(galaxy){
     g=galaxy;
+    cat=model.catalogForSave(baseCatalog,g.version);
     namedIds.clear();$('named-search').value='';
     selected=new Set(g.demo?g.systems.filter(s=>s.x>-45 && s.x<24 && s.y<0 && s.y>-82).map(s=>s.id):[]);
     render(true);
@@ -427,8 +436,9 @@
     }
   }
   async function start(){
-    cat=globalThis.EMBEDDED_CATALOG ?? await (await fetch('catalog.json')).json();
-    tabLanguage();install(globalThis.LOCAL_SNAPSHOT ?? exampleGalaxy());
+    baseCatalog=globalThis.EMBEDDED_CATALOG ?? await (await fetch('catalog.json')).json();
+    cat=baseCatalog;
+    tabLanguage();install(globalThis.LOCAL_SNAPSHOT ?? exampleGalaxy(baseCatalog.version));
     $('file').addEventListener('change',e=>{load(e.target.files[0]);e.target.value='';});
     $('language').onchange=e=>{lang=e.target.value;tabLanguage();render();};
     $('named-search').oninput=updateNamedChoices;

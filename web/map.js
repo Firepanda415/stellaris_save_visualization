@@ -307,6 +307,16 @@
         }
       }
       ctx.globalAlpha=1;
+      if(opts.leviathans){
+        for(const {r,x,y} of visible){
+          if(!r.leviathans.length)continue;
+          ctx.beginPath();ctx.moveTo(x,y-15);ctx.lineTo(x+6,y-5);ctx.lineTo(x-6,y-5);ctx.closePath();
+          ctx.strokeStyle='#152127';ctx.lineWidth=3.8;ctx.stroke();
+          if(r.leviathans.some(v=>v.present)){ctx.fillStyle='#ff879f';ctx.fill();}
+          ctx.strokeStyle='#ff879f';ctx.lineWidth=2;ctx.stroke();
+          this.markerHits.push({id:r.s.id,key:'leviathan',left:x-7,right:x+7,top:y-16,bottom:y-4});
+        }
+      }
       const d=this.drag;
       if(d && !d.pan){
         ctx.fillStyle='#79e3bd25';ctx.strokeStyle='#9af1cd';ctx.lineWidth=1;

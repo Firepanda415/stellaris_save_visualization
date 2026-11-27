@@ -5,9 +5,35 @@
   const table = fields => ({'*': fields});
   const lostMakersChoices = ['1','2','3','4','5','baol_1','zroni_1','inetian','adakkaria']
     .map(id => 'precursor_' + id);
+  // A scripted encounter site can survive the guardian or precede its arrival.
+  const guardians = {
+    guardian_sphere: {name:'NAME_Infinity_Machine',init:'guardians_init_technosphere',flag:'guardians_technosphere_system',encounter:'guardians_technosphere_encountered'},
+    guardian_scavenger_bot: {name:'NAME_Scavenger_Bot',init:'scavenger_system',flag:'scavenger_bot_system',encounter:'encountered_scavenger_bot'},
+    crystal_nidus: {name:'NAME_Crystal_Nidus',init:'hostile_init_07',flag:'crystal_home_system',encounter:'found_crystal_construct'},
+    guardian_dragon: {name:'NAME_Ether_Drake',init:'guardians_init_dragon',flag:'guardians_dragon_system',encounter:'dragon_encounter'},
+    guardian_horror: {name:'NAME_Dimensional_Horror',init:'guardians_init_horror',flag:'guardians_horror_system'},
+    guardian_dreadnought: {name:'NAME_Automated_Dreadnought',init:'guardians_init_dreadnought',flag:'guardians_dreadnought_system',encounter:'encountered_dreadnought'},
+    guardian_fortress: {name:'NAME_Enigmatic_Fortress',init:'guardians_init_fortress',flag:'guardians_fortress_system',encounter:'disabled_enigmatic_fortress'},
+    guardian_hiver: {name:'NAME_Hive_Asteroid',init:'guardians_init_hive',flag:'guardians_hive_system',encounter:'provoked_hivers'},
+    guardian_stellarite: {name:'NAME_Stellarite_Devourer',init:'guardians_init_stellarites',flag:'guardians_stellarite_system'},
+    guardian_wraith: {name:'NAME_Wraith',init:'guardians_init_wraith',flag:'guardians_wraith_system'},
+    guardian_hatchling: {name:'NAME_Voidspawn',init:'guardians_init_hatchling',flag:'guardians_hatchling_system'},
+    guardian_elderly_tiyanki: {name:'NAME_Elderly_Tiyanki',init:'elderly_tiyanki_system',flag:'elderly_tiyanki_system',encounter:'encountered_elderly_tiyanki'},
+    guardian_toxic_god: {name:'NAME_Toxic_God',init:'toxic_knights_finish',flag:'guardian_toxic_god_system'},
+    guardian_opus_sentinel: {name:'NAME_Opus_Sentinel',init:'origin_unplugged_machine_legacy_core_system_init'},
+    origin_dragon: {name:'NAME_Sky_Dragon',flag:'here_be_dragons_system'},
+    shard: {name:'NAME_Shard',init:'rubricator_system',flag:'rubricator_system'},
+    eldritch_horror: {name:'NAME_Eldritch_Horror'}
+  };
+  const sitesByScript = new Map(), encounterFlags = {};
+  for (const entry of Object.values(guardians)) {
+    if (entry.init) sitesByScript.set(entry.init,entry);
+    if (entry.flag) sitesByScript.set(entry.flag,entry);
+    if (entry.encounter) encounterFlags[entry.encounter] = all;
+  }
   const country = {
     name: all, type: all, terra_incognita: {systems: all}, surveyed_deposit_holders: all,
-    government: {origin: all}, flags: {origin_lost_makers_connection_restored: all,
+    government: {origin: all}, sensor_range_fleets: all, flags: {origin_lost_makers_connection_restored: all, ...encounterFlags,
       ...Object.fromEntries(lostMakersChoices.map(key => ['lost_makers_' + key + '_selected', all]))},
     intel_level: all, hyperlane_systems: all, starting_system: all,
     fleets_manager: {owned_fleets: all}, events: {anomalies: all}, relations_manager: {relation: {country: all, contact: all}}
@@ -15,11 +41,12 @@
   const shape = {
     version: all, date: all, player: all, country: table(country),
     galactic_object: table({name: all, coordinate: {x: all, y: all}, planet: all,
-      hyperlane: all, starbases: all, initializer: all, flags: all}),
+      hyperlane: all, starbases: all, initializer: all, flags: all, fleet_presence: all}),
     planets: {planet: table({name: all, planet_class: all, planet_size: all, deposits: all,
       owner: all, anomaly: all, anomaly_owner: all, planet_modifier: all, timed_modifier: all, flags: all})},
     deposit: table({type: all, killed: all}),
     ships: table({fleet: all}), starbase_mgr: {starbases: table({station: all})},
+    fleet: table({name:{key:all,literal:all},ships:all}),
     megastructures: table({type: all, overclock_type: all, coordinate: {origin: all}}),
     archaeological_sites: {sites: table({type: all, location: all, visible_to: all, completed: all})}
   };
@@ -90,6 +117,8 @@
     const playerBlock = one(raw,'player')?._?.[0];
     const player = one(playerBlock,'country');
     const countries = one(raw,'country'), home = one(countries,player);
+    const flags = one(home,'flags') ?? {};
+    const sensed = new Set(list(home,'sensor_range_fleets')), fleets = one(raw,'fleet');
     const visited = new Set(list(one(home,'terra_incognita'),'systems'));
     const survey = new Set(list(home,'surveyed_deposit_holders').filter(v=>one(v,'type')==='0').map(v=>one(v,'id')));
     const intel = list(home,'intel_level'), laneIntel = new Set(list(home,'hyperlane_systems'));
@@ -119,6 +148,29 @@
       const system = {id,x,y,name:name(one(g,'name')) || '#'+id,owner,ownerKnown,known:visited.has(id),intel:intelLevel,
         knownLanes:laneIntel.has(id),init:one(g,'initializer') || '',flags:Object.keys(one(g,'flags') ?? {}),
         lanes:[...new Set(list(g,'hyperlane').map(h=>one(h,'to')).filter(valid))],planets:[],megas:[],arcModes:[],sites:[]};
+      const sightings = new Map();
+      for (const script of [system.init,...system.flags]) {
+        const entry = sitesByScript.get(script);
+        if (entry) sightings.set(entry.name,{key:entry.name,site:true,knownSite:!!entry.encounter && Object.hasOwn(flags,entry.encounter)});
+      }
+      for (const fid of list(g,'fleet_presence')) {
+        const type = countryTypes[fleetOwner.get(fid)];
+        if (!Object.hasOwn(guardians,type) && type!=='crystal') continue;
+        const fleet = one(fleets,fid);
+        if (!list(fleet,'ships').length) continue;
+        const fleetName = name(one(fleet,'name'));
+        let entry = guardians[type];
+        if (type==='crystal') entry = fleetName==='NAME_Crystal_Nidus' ? guardians.crystal_nidus : null;
+        if (type==='guardian_dragon' && fleetName==='NAME_Shard') entry = guardians.shard;
+        if (type==='guardian_horror' && fleetName==='NAME_Eldritch_Horror') entry = guardians.eldritch_horror;
+        if (type==='guardian_opus_sentinel' && fleetName!=='NAME_Opus_Sentinel') continue;
+        if (!entry) continue;
+        const record = sightings.get(entry.name) ?? {key:entry.name};
+        record.present = true;
+        record.sensed ||= sensed.has(fid);
+        sightings.set(entry.name,record);
+      }
+      if (sightings.size) system.leviathans = [...sightings.values()];
       for (const pid of g.planet ?? []) {
         const p = one(planets,pid);
         if (!p || typeof p !== 'object') continue;
@@ -153,7 +205,6 @@
         completed:!!s.completed,playerCompletedOn:one(record,'date')});
     }
     if (!systemMap.size || !home) throw Error('No player galaxy in text save');
-    const flags = one(home,'flags') ?? {};
     const lostMakers = one(one(home,'government'),'origin') === 'origin_lost_makers' ? {
       precursor: lostMakersChoices.find(key => Object.hasOwn(flags,'lost_makers_' + key + '_selected')),
       restored: Object.hasOwn(flags,'origin_lost_makers_connection_restored')

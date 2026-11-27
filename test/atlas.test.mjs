@@ -30,6 +30,37 @@ deposit={1={type=d_minerals_3} 2={type=d_crystalline_caverns} 3={type=d_minerals
 archaeological_sites={sites={0={type=omnirelic_site location={type=2 id=8} visible_to={1}}}}
 megastructures={7={type=think_tank_ruined coordinate={origin=3}}}`;
 const galaxy=await GalaxyReader.readFile(new Blob([source]));
+test('Leviathans distinguish recorded sites, sensed fleets and ordinary crystal swarms',async()=>{
+  const save=`version="4.6.0" player={{country=0}}
+    country={
+      0={starting_system=1 terra_incognita={systems={1 2 3 4 5 6}} sensor_range_fleets={11 12 13 14 15}
+         flags={found_crystal_construct=1 guardians_wraith_encountered=1}}
+      1={type=crystal fleets_manager={owned_fleets={{fleet=11} {fleet=12}}}}
+      2={type=guardian_wraith fleets_manager={owned_fleets={{fleet=13}}}}
+      3={type=guardian_sphere fleets_manager={owned_fleets={{fleet=16}}}}
+      4={type=guardian_dragon fleets_manager={owned_fleets={{fleet=14}}}}
+      5={type=default fleets_manager={owned_fleets={{fleet=15}}}}
+    }
+    galactic_object={
+      1={coordinate={x=0 y=0} initializer=hostile_init_07 flags={crystal_home_system=1} fleet_presence={11}}
+      2={coordinate={x=1 y=0} flags={crystal_system=1} fleet_presence={12 15}}
+      3={coordinate={x=2 y=0} flags={guardians_wraith_system=1}}
+      4={coordinate={x=3 y=0} fleet_presence={13 14}}
+      5={coordinate={x=4 y=0} initializer=guardians_init_technosphere fleet_presence={16}}
+      6={coordinate={x=5 y=0} initializer=scavenger_system}
+    }
+    fleet={11={name={key=NAME_Crystal_Nidus} ships={1}} 12={name={key=NAME_Shardlings} ships={2}}
+           13={ships={3}} 14={name={key=NAME_Shard} ships={4}} 15={name={key=NAME_Crystal_Nidus} ships={5}}
+           16={name={key=NAME_The_Infinity_Machine} ships={6}}}`;
+  const read=text=>GalaxyReader.readFile(new Blob([text]));
+  const byView=(g,view)=>[...GalaxyModel.inspect(g,catalog,{view},HIGHLIGHTS).values()].map(row=>row.leviathans.map(v=>[v.key,v.present]));
+  const g=await read(save);
+  const visible=[['NAME_Wraith',true],['NAME_Shard',true]];
+  assert.deepEqual(byView(g,'all'),[[['NAME_Crystal_Nidus',true]],[],[['NAME_Wraith',false]],visible,[['NAME_Infinity_Machine',true]],[['NAME_Scavenger_Bot',false]]]);
+  assert.deepEqual(byView(g,'player'),[[['NAME_Crystal_Nidus',true]],[],[],visible,[],[]]);
+  const cleared=await read(save.replace('fleet_presence={11}','fleet_presence={}'));
+  assert.deepEqual(byView(cleared,'player')[0],[['NAME_Crystal_Nidus',false]]);
+});
 const opts={scope:'colony',toxic:'all',min:15,view:'all'};
 const inspect=opt=>GalaxyModel.inspect(galaxy,catalog,{...opts,...opt},HIGHLIGHTS);
 const stats=(r,foreign=false)=>GalaxyModel.summarize(new Set(['3','4','5']),r,

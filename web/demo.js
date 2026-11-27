@@ -27,6 +27,8 @@ function exampleGalaxy(version) {
       planets,megas:i%64===11?['think_tank_ruined']:[],sites:[],lanes:[]});
   }
   const polaris=systems[35];
+  systems[22].leviathans=[{key:'NAME_Crystal_Nidus',site:true,present:true,sensed:true}];
+  systems[120].leviathans=[{key:'NAME_Infinity_Machine',site:true,present:true}];
   polaris.name='NAME_Polaris';polaris.init='polaris_civilization';
   Object.assign(polaris.planets[1],{name:{key:'PLANET_NAME_FORMAT',vars:[['PARENT',polaris.name],['NUMERAL','II']]},
     type:'pc_ocean',size:23,candidate:false});

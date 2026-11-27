@@ -247,3 +247,70 @@ for (const [key, chinese, english, event] of precursorRegions) {
 }
 
 globalThis.HIGHLIGHTS = highlights;
+
+globalThis.LEVIATHAN_NOTES = {
+  NAME_Infinity_Machine: {
+    zh:'可以协助无限神机完成计算。若触发庞大古埃结局，可获得 200 影响力，研究速度永久提高 10%。',
+    en:'You can assist the machine with its calculations. The Pantagruel outcome grants 200 Influence and permanently increases research speed by 10%.'
+  },
+  NAME_Scavenger_Bot: {
+    zh:'击毁后选择回收，可获得纳米修复系统、纳米机关炮和纳米高射炮科技。',
+    en:'Destroy the bot and salvage its remains to gain the Nanite Repair System, Nanite Autocannon and Nanite Flak Battery technologies.'
+  },
+  NAME_Crystal_Nidus: {
+    zh:'水晶生物的巢穴。摧毁巢穴可获得「水晶锻造镀层」研究选项。',
+    en:'Destroy the Crystal Nidus to unlock the Crystal-Forged Plating research option.'
+  },
+  NAME_Ether_Drake: {
+    zh:'击败巨龙后，在龙之宝藏星球上建造采矿站，有机会发现龙骨并取得人造龙鳞装甲。',
+    en:'After defeating the drake, build a mining station at Dragon’s Hoard for a chance to find dragon remains and obtain Artificial Dragonscales.'
+  },
+  NAME_Dimensional_Horror: {
+    zh:'击败后研究残留能量。如果跃迁引擎和灵能跃迁引擎都尚未掌握，可解锁跃迁引擎研究并获得 50% 进度。',
+    en:'Research the residual energy after defeating the Horror. If you have neither Jump Drives nor Psi Jump Drives, the project unlocks Jump Drives with 50% research progress.'
+  },
+  NAME_Automated_Dreadnought: {
+    zh:'使战舰失去战斗能力后，可选择修复它。完成修复项目可将它编入自己的舰队。',
+    en:'After disabling the dreadnought, choose to repair it. Completing the project adds the ship to your fleet.'
+  },
+  NAME_Enigmatic_Fortress: {
+    zh:'使堡垒失去战斗能力后可以探索内部。成功解谜可获得神秘编码器和神秘解码器各 30% 的研究进度。',
+    en:'Explore the disabled fortress and solve its puzzles for 30% research progress in both the Enigmatic Encoder and Enigmatic Decoder.'
+  },
+  NAME_Hive_Asteroid: {
+    zh:'清除蜂群后，完成登上小行星的特殊项目可获得 2,000 社会学研究点数和 500 能量币。',
+    en:'After clearing the hives, complete the boarding project for 2,000 Society Research and 500 Energy Credits.'
+  },
+  NAME_Wraith: {
+    zh:'光谱幽魂会离开出现星系。击败它可永久提高 5% 的物理学研究速度和能量武器伤害，以及 10% 的岗位能量币产出。',
+    en:'The Spectral Wraith can leave its spawn system. Defeating it permanently raises physics research speed and energy weapon damage by 5% each, and Energy Credits from jobs by 10%.'
+  },
+  NAME_Stellarite_Devourer: {
+    zh:'击败噬星虫后，可尝试恢复恒星。项目有 70% 概率成功并将一颗冰封星球变为盖亚星球，失败会损失科研船和科学家。',
+    en:'After defeating the Devourer, you can try to restore the star. The project has a 70% chance to turn a frozen world into a Gaia world. Failure costs the science ship and scientist.'
+  },
+  NAME_Elderly_Tiyanki: {
+    zh:'击败族母后，可以救出瑞斯·昂多和他的战舰。',
+    en:'After defeating the Matriarch, you can rescue Reth Unddol and his battleship.'
+  },
+  NAME_Voidspawn: {
+    zh:'虚空孳孽可能从行星中孵化。击败它后可调查卵壳，取得超体进化科技的研究进度。',
+    en:'The Voidspawn can hatch from a planet. After defeating it, investigate the eggshell for research progress in Gargantuan Evolution.'
+  },
+  NAME_Shard: {
+    zh:'完成飞天鼠盗遗址的发掘可唤醒裂爪龙。击败它可以夺得誊录仪。',
+    en:'Completing the Kleptomaniac Rats excavation can awaken Shard. Defeat the dragon to claim the Rubricator.'
+  },
+  NAME_Sky_Dragon: {
+    zh:'「与龙共舞」起源的天龙会守护其起源帝国的首都。',en:'The Here Be Dragons origin starts with a Sky Dragon guarding the empire’s capital system.'
+  },
+  NAME_Toxic_God: {
+    zh:'击败毒圣后，事件选项可以授予毒圣遗珍。',en:'After defeating the Toxic God, you can claim its relic.'
+  },
+  NAME_Opus_Sentinel: {
+    zh:'奥普斯哨兵守卫机械遗产核心星系。',en:'The Opus Sentinel guards the Machine Legacy core system.'
+  },
+  NAME_Eldritch_Horror: {
+    zh:'这只诡异之魇由考古事件唤醒。',en:'This horror awakens during an archaeological expedition.'
+  }
+};

@@ -10,7 +10,7 @@
     named:'Fixed-name systems',findNamed:'Find a system or dig site',namedAll:'Mark all listed systems',
     playerTerr:'Player',npcTerr:'Regular NPC',fallenTerr:'Fallen Empire',unknownTerr:'Unknown owner',
     countTerritory:'Territory to count',freeTerr:'Unclaimed systems always count.',
-    clues:'Precursor clue regions',ruins:'Ruined megastructures',fit:'Fit',select:'Select',pan:'Pan',
+    clues:'Precursor clue regions',ruins:'Ruined megastructures',leviathans:'Leviathans',markLeviathans:'Mark Leviathans on the map',leviathanLegend:'▲ Present here　△ Encounter site',fit:'Fit',select:'Select',pan:'Pan',
     gesture:'Drag to select · Ctrl-click or Ctrl-drag to toggle · Scroll to zoom',inspect:'Inspect system',toggle:'Toggle selection',
     selection:'Selection',clear:'Clear',systems:'Systems',matched:'Matching bodies',
     distribution:'Size distribution',size:'Size',other:'Non-toxic',toxicShort:'Toxic',output:'Orbital resources',
@@ -52,7 +52,7 @@
     const checked=attribute=>new Set([...document.querySelectorAll('[data-'+attribute+']:checked')].map(el=>el.dataset[attribute]));
     return {min:Math.max(0,Number($('min').value)||0),toxic:$('toxic').value,scope:$('scope').value,view:$('view').value,
       resource:$('resource').value,shaded:checked('shade'),included:checked('count').add('unclaimed'),namedIds,lang,
-      ...Object.fromEntries(['sizes','territory','rare','features','rewards','relic','events','homes','ruins','clues'].map(k=>[k,$(k).checked]))};
+      ...Object.fromEntries(['sizes','territory','rare','features','rewards','relic','events','homes','ruins','clues','leviathans'].map(k=>[k,$(k).checked]))};
   }
   function featureName(key){
     return local(key).replace(/£[\w]+£\s*/g,'').trim() || key;
@@ -154,6 +154,20 @@
     updateNamedChoices();
   }
   function planetName(p){return local(p.name) || '#'+p.id;}
+  function leviathanList(){
+    const entries=[];
+    for(const r of rows.values())for(const {key,present} of r.leviathans)entries.push({r,label:local(key),present});
+    entries.sort((a,b)=>a.label.localeCompare(b.label,lang));
+    const buttons=entries.map(({r,label,present})=>{
+      const button=document.createElement('button');button.type='button';
+      button.textContent=(present?'▲ ':'△ ')+label+' · '+title(r);
+      button.onclick=()=>{picked=r.s.id;map.focusSystem(picked);details();};
+      return button;
+    });
+    $('leviathan-group').hidden=!entries.length;
+    $('leviathan-count').textContent=nf(entries.length);
+    $('leviathan-list').replaceChildren(...buttons);
+  }
   function featureText(key,count,alwaysCount=false){
     const def=cat.deposits[key];
     const resources=(def.surfaceStrategic ?? []).map(k=>{
@@ -180,6 +194,13 @@
       if(detail){const sub=document.createElement('div');sub.className='sheet-sub';sub.textContent=detail;line.append(sub);}
       if(!block.parentNode)sheet.append(block);
       block.append(line);
+    }
+    if(r.leviathans.length){
+      const group=section(t('利维坦','Leviathans'));
+      for(const {key,present} of r.leviathans){
+        const status=present?t('当前在此','Present here'):t('遭遇地点（当前未确认）','Encounter site (presence unconfirmed)');
+        item(group,local(key)+' · '+status,LEVIATHAN_NOTES[key]?.[lang]);
+      }
     }
     if(r.fixedName && r.fixedSites.length){
       const preset=section(t('星系关联遗址','Dig sites tied to this system'));
@@ -392,7 +413,7 @@
     $('count-unknown').hidden=![...rows.values()].some(r=>r.territory==='unknown');
     if(geometryChanged || !rows.has(picked)) picked=rows.has(g.start)?g.start:(rows.keys().next().value ?? null);
     if(geometryChanged || $('systems').lang!==lang){
-      namedList();
+      namedList();leviathanList();
       const frag=document.createDocumentFragment();
       for(const r of rows.values()){const o=document.createElement('option');o.value=title(r);frag.append(o);}
       $('systems').replaceChildren(frag);$('systems').lang=lang;
@@ -460,7 +481,7 @@
       map.panMode=id==='pan-mode';$('select-mode').setAttribute('aria-pressed',String(!map.panMode));$('pan-mode').setAttribute('aria-pressed',String(map.panMode));
       $('map').style.cursor=map.panMode?'grab':'crosshair';
     };
-    for(const id of ['scope','toxic','view','sizes','territory','rare','features','rewards','relic','events','homes','ruins','clues']) $(id).onchange=()=>render(id==='view');
+    for(const id of ['scope','toxic','view','sizes','territory','rare','features','rewards','relic','events','homes','ruins','clues','leviathans']) $(id).onchange=()=>render(id==='view');
     $('resource').onchange=()=>{
       const key=$('resource').value;
       if(key==='reward' || key.startsWith('r_'))$('rewards').checked=true;

@@ -647,8 +647,11 @@ input[data-shade=fallen],input[data-count=fallen] {accent-color:var(--territory-
 #feature-counts details {padding:4px 0;border-bottom:1px solid var(--line);}
 #feature-counts ul {list-style:none;padding:0 0 0 9px;margin:4px 0;}
 #feature-counts button {border:0;background:transparent;text-align:left;padding:2px;font-size:.8rem;color:var(--accent);}
-#named-systems {margin:.55rem 0;}
-#named-systems summary {cursor:pointer;color:var(--ink);font-size:.88rem;}
+#named-systems,#leviathan-group {margin:.55rem 0;}
+#named-systems summary,#leviathan-group summary {cursor:pointer;color:var(--ink);font-size:.88rem;}
+.leviathan-symbol {color:#ff879f;font-weight:700;}
+#leviathan-list {display:grid;gap:.2rem;max-height:16rem;overflow:auto;}
+#leviathan-list button {text-align:left;font-size:.84rem;}
 #named-count {color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;}
 .named-diamond {color:#f5dd81;}
 #named-search {min-width:0;width:100%;background:var(--inset);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:.32rem .5rem;}

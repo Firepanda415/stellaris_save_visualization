@@ -65,7 +65,12 @@
       const row={s,owner,territory,worlds:[],resources:{},surface:{},surfaceYield:{},features:{},locations:[],
         conditional:0,unknown:new Set(),orbitalRare:new Set(),prizes:new Map(),
         relicWorlds:[],ruins:[],structures:[],events:[],homes:[],clues:[],sites:[],anomalies:[],
-        fixedName:null,fixedSites:[]};
+        fixedName:null,fixedSites:[],leviathans:[]};
+      for(const sighting of s.leviathans ?? []){
+        const present=full ? sighting.present : sighting.sensed;
+        if(present || (full ? sighting.site : sighting.knownSite))
+          row.leviathans.push({key:sighting.key,present:!!present});
+      }
       const seen=new Set();
       function event(key,group) {
         const note=highlights[key];

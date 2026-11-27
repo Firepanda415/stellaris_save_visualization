@@ -10,6 +10,8 @@ Player records show charted systems, surveyed bodies and known dig sites. Foreig
 
 Expand **Fixed-name systems** to find a system by its English or Chinese name or dig site. Check a system to mark its location with a gold diamond, or click its name to center the map. The list uses system templates found in the current save. For example, the Polaris template places the One Last Hope dig site. The full-save view identifies template-linked sites that have no current site record. Player records show a linked site once it is known.
 
+Expand **Leviathans** and choose an entry to locate a guardian or a Crystal Nidus. A filled triangle (▲) marks a system where a guardian or the Nidus is present. An open triangle (△) marks an encounter site. In Player records, the filled marker requires a fleet within sensor range. Hover over either marker to see the encounter and its rewards.
+
 ## Run locally
 
 Serve `web/` with a static HTTP server, for example `python -m http.server 4174 --bind 127.0.0.1 --directory web`. Open `http://127.0.0.1:4174/` and choose a save. The browser reads the file locally.
